@@ -50,6 +50,10 @@ import {
 export default function App() {
   const [activeTab, setActiveTab] = useState<"processor" | "rules" | "googleSheets" | "analytics" | "guide">("processor");
   
+  // Custom auth modal state
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailInputVal, setEmailInputVal] = useState("");
+
   // State to hold active Google user's email
   const userEmailRef = useRef("Kế toán viên (Chưa đăng nhập)");
   
@@ -155,36 +159,60 @@ export default function App() {
   // Load rules on startup with Google Sheets auto-pull check
   useEffect(() => {
     const startupLoad = async () => {
-      // Yêu cầu nhập email nếu chưa có
-      let currentEmail = localStorage.getItem("google_sheets_user_name");
-      if (!currentEmail || currentEmail === "Kế toán viên" || currentEmail === "Kế toán viên (Chưa đặt tên)") {
-        currentEmail = prompt("Vui lòng nhập Email của bạn để lưu lịch sử thao tác:") || "Kế toán viên";
-        localStorage.setItem("google_sheets_user_name", currentEmail);
-      }
-      userEmailRef.current = currentEmail;
-
       // 1. Load local rules first
       const local = loadRules();
       setRules(local);
-      
+
       // 2. Check Sheets Auto Pull
       const sheetCfg = loadSheetsConfig();
-      if (sheetCfg.syncEnabled && sheetCfg.autoPull && sheetCfg.webAppUrl) {
-        try {
-          console.log("Auto-pulling rules from Google Sheets on start...");
-          const gsRules = await pullRulesFromGoogleSheet(sheetCfg.webAppUrl, null);
-          if (gsRules && gsRules.length > 0) {
-            setRules(gsRules);
-            saveRules(gsRules);
-            console.log(`Auto-pull success! Pulled ${gsRules.length} rules.`);
+
+      // Check Email
+      let currentEmail = localStorage.getItem("google_sheets_user_name");
+      if (!currentEmail || currentEmail === "Kế toán viên" || currentEmail === "Kế toán viên (Chưa đặt tên)") {
+        setShowEmailModal(true);
+      } else {
+        userEmailRef.current = currentEmail;
+        if (sheetCfg.syncEnabled && sheetCfg.autoPull && sheetCfg.webAppUrl) {
+          try {
+            console.log("Auto-pulling rules from Google Sheets on start...");
+            const gsRules = await pullRulesFromGoogleSheet(sheetCfg.webAppUrl, null);
+            if (gsRules && gsRules.length > 0) {
+              setRules(gsRules);
+              saveRules(gsRules);
+              console.log(`Auto-pull success! Pulled ${gsRules.length} rules.`);
+            }
+          } catch (err) {
+            console.error("Auto pull failed on startup:", err);
           }
-        } catch (err) {
-          console.error("Auto pull failed on startup:", err);
         }
       }
     };
     startupLoad();
   }, []);
+
+  const handleEmailSubmit = async () => {
+    if (!emailInputVal.includes("@")) {
+      alert("Vui lòng nhập một địa chỉ email hợp lệ!");
+      return;
+    }
+    localStorage.setItem("google_sheets_user_name", emailInputVal);
+    userEmailRef.current = emailInputVal;
+    setShowEmailModal(false);
+
+    // After setting email, auto pull if enabled
+    const sheetCfg = loadSheetsConfig();
+    if (sheetCfg.syncEnabled && sheetCfg.autoPull && sheetCfg.webAppUrl) {
+      try {
+        const gsRules = await pullRulesFromGoogleSheet(sheetCfg.webAppUrl, null);
+        if (gsRules && gsRules.length > 0) {
+          setRules(gsRules);
+          saveRules(gsRules);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
 
   // Save rules when changed
   const handleRulesChange = async (updatedRules: KeywordRule[]) => {
@@ -2543,6 +2571,41 @@ export default function App() {
         </>
       )}
 
+      {/* Email Login Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-fade-in">
+            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600 mx-auto">
+              <Zap className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 text-center mb-2">Xác thực người dùng</h2>
+            <p className="text-xs text-slate-500 text-center mb-6 leading-relaxed">
+              Vui lòng nhập Email của bạn để hệ thống có thể định danh và lưu trữ chính xác lịch sử thao tác của bạn.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Địa chỉ Email</label>
+                <input
+                  type="email"
+                  value={emailInputVal}
+                  onChange={(e) => setEmailInputVal(e.target.value)}
+                  placeholder="ví dụ: ketoan@vccorp.vn"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-800 text-sm px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleEmailSubmit();
+                  }}
+                />
+              </div>
+              <button
+                onClick={handleEmailSubmit}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-4 py-3 rounded-xl transition-all shadow-md active:scale-95"
+              >
+                Vào ứng dụng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
