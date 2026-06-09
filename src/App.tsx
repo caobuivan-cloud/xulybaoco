@@ -56,11 +56,11 @@ export default function App() {
   // Helper to log user actions to Google Sheet
   const logUserActionOnSheets = async (actionName: string, actionDetails: string) => {
     const sheetCfg = loadSheetsConfig();
-    if (sheetCfg.syncEnabled && sheetCfg.logsEnabled && isTokenValid(sheetCfg) && sheetCfg.spreadsheetId) {
+    if (sheetCfg.syncEnabled && sheetCfg.logsEnabled && sheetCfg.webAppUrl) {
       try {
         await writeActionLogToSheet(
-          sheetCfg.spreadsheetId,
-          sheetCfg.accessToken!,
+          sheetCfg.webAppUrl,
+          "",
           userEmailRef.current,
           actionName,
           actionDetails
@@ -159,12 +159,12 @@ export default function App() {
       const local = loadRules();
       setRules(local);
       
-      // 2. Check Sheets Auto Pull (supports guest pulling for shared users)
+      // 2. Check Sheets Auto Pull
       const sheetCfg = loadSheetsConfig();
-      if (sheetCfg.syncEnabled && sheetCfg.autoPull && sheetCfg.spreadsheetId) {
+      if (sheetCfg.syncEnabled && sheetCfg.autoPull && sheetCfg.webAppUrl) {
         try {
           console.log("Auto-pulling rules from Google Sheets on start...");
-          const gsRules = await pullRulesFromGoogleSheet(sheetCfg.spreadsheetId, sheetCfg.accessToken);
+          const gsRules = await pullRulesFromGoogleSheet(sheetCfg.webAppUrl, null);
           if (gsRules && gsRules.length > 0) {
             setRules(gsRules);
             saveRules(gsRules);
@@ -190,13 +190,13 @@ export default function App() {
 
     // Google Sheets Auto-Push & Logging
     const sheetCfg = loadSheetsConfig();
-    if (sheetCfg.syncEnabled && sheetCfg.autoPush && isTokenValid(sheetCfg) && sheetCfg.spreadsheetId) {
+    if (sheetCfg.syncEnabled && sheetCfg.autoPush && sheetCfg.webAppUrl) {
       try {
-        await pushRulesToGoogleSheet(updatedRules, sheetCfg.spreadsheetId, sheetCfg.accessToken!);
+        await pushRulesToGoogleSheet(updatedRules, sheetCfg.webAppUrl, "");
         if (sheetCfg.logsEnabled) {
           await writeActionLogToSheet(
-            sheetCfg.spreadsheetId,
-            sheetCfg.accessToken!,
+            sheetCfg.webAppUrl,
+            "",
             userEmailRef.current,
             "Cập nhật từ khóa",
             `Thành viên cập nhật bộ nguyên tắc đối chiếu (${updatedRules.length} từ khóa)`
@@ -221,9 +221,9 @@ export default function App() {
       logUserActionOnSheets("Khôi phục mặc định", `Đã khôi phục danh sách từ khóa mặc định (${defaults.length} quy tắc)`);
       
       const sheetCfg = loadSheetsConfig();
-      if (sheetCfg.syncEnabled && sheetCfg.autoPush && isTokenValid(sheetCfg) && sheetCfg.spreadsheetId) {
+      if (sheetCfg.syncEnabled && sheetCfg.autoPush && sheetCfg.webAppUrl) {
         try {
-          await pushRulesToGoogleSheet(defaults, sheetCfg.spreadsheetId, sheetCfg.accessToken!);
+          await pushRulesToGoogleSheet(defaults, sheetCfg.webAppUrl, "");
         } catch (err) {
           console.error("Auto push default rules error:", err);
         }

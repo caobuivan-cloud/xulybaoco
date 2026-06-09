@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { 
-  FileSpreadsheet, 
-  CheckCircle, 
-  AlertCircle, 
   RefreshCw, 
   ExternalLink,
-  Sparkles
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 import { KeywordRule } from "../types";
 import { 
   SheetsConfig, 
   loadSheetsConfig, 
-  saveSheetsConfig, 
   pullRulesFromGoogleSheet, 
   pushRulesToGoogleSheet, 
   writeActionLogToSheet
@@ -28,9 +25,7 @@ export const GoogleSheetsSettings: React.FC<GoogleSheetsSettingsProps> = ({
   onRulesSynced,
   userEmailStateRef
 }) => {
-  const [config, setConfig] = useState<SheetsConfig>(loadSheetsConfig());
-  const [urlInput, setUrlInput] = useState(config.webAppUrl);
-  const [nameInput, setNameInput] = useState(config.userName);
+  const [config] = useState<SheetsConfig>(loadSheetsConfig());
   const [isSyncing, setIsSyncing] = useState(false);
   const [noti, setNoti] = useState<{ type: "success" | "error" | "info"; msg: string } | null>(null);
 
@@ -46,63 +41,6 @@ export const GoogleSheetsSettings: React.FC<GoogleSheetsSettingsProps> = ({
       userEmailStateRef.current = "Kế toán viên (Chưa đặt tên)";
     }
   }, [config.userName]);
-
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value.trim();
-    setUrlInput(input);
-  };
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    setNameInput(input);
-  };
-
-  const handleSaveConfig = () => {
-    if (!urlInput.startsWith("https://script.google.com/macros/s/")) {
-      showNotification("error", "URL Web App không hợp lệ! Vui lòng nhập đúng đường dẫn Google Apps Script.");
-      return;
-    }
-    const newConfig = { ...config, webAppUrl: urlInput, userName: nameInput };
-    setConfig(newConfig);
-    saveSheetsConfig(newConfig);
-    showNotification("success", "Lưu cấu hình Web App thành công!");
-    
-    if (newConfig.logsEnabled) {
-      writeActionLogToSheet(newConfig.webAppUrl, "", newConfig.userName, "Kết nối", "Đã lưu cấu hình Google Apps Script Web App");
-    }
-  };
-
-  const toggleSyncEnabled = (checked: boolean) => {
-    setConfig(prev => {
-      const u = { ...prev, syncEnabled: checked };
-      saveSheetsConfig({ syncEnabled: checked });
-      return u;
-    });
-  };
-
-  const togglePullEnabled = (checked: boolean) => {
-    setConfig(prev => {
-      const u = { ...prev, autoPull: checked };
-      saveSheetsConfig({ autoPull: checked });
-      return u;
-    });
-  };
-
-  const togglePushEnabled = (checked: boolean) => {
-    setConfig(prev => {
-      const u = { ...prev, autoPush: checked };
-      saveSheetsConfig({ autoPush: checked });
-      return u;
-    });
-  };
-
-  const toggleLogsEnabled = (checked: boolean) => {
-    setConfig(prev => {
-      const u = { ...prev, logsEnabled: checked };
-      saveSheetsConfig({ logsEnabled: checked });
-      return u;
-    });
-  };
 
   const handleManualPull = async () => {
     if (!config.webAppUrl) {
@@ -165,22 +103,7 @@ export const GoogleSheetsSettings: React.FC<GoogleSheetsSettingsProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 md:p-8 space-y-6 animate-fade-in" id="google-sheets-sync-wrapper">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100">
-        <div>
-          <h2 className="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
-            <FileSpreadsheet className="w-5.5 h-5.5 text-emerald-600" />
-            Đồng Bộ Google Sheets (Private Web App)
-            <span className="text-xs bg-emerald-50 text-emerald-600 font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Tự động hóa
-            </span>
-          </h2>
-          <p className="text-slate-500 text-sm mt-1">
-            Kết nối thông qua Google Apps Script Web App để không cần đăng nhập tài khoản.
-          </p>
-        </div>
-      </div>
-
+    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6 space-y-4 animate-fade-in">
       {noti && (
         <div className={`flex items-start gap-3 px-4.5 py-3.5 rounded-xl text-xs font-semibold animate-fade-in ${
           noti.type === "success" ? "bg-emerald-50 text-emerald-800 border-emerald-100" :
@@ -191,55 +114,6 @@ export const GoogleSheetsSettings: React.FC<GoogleSheetsSettingsProps> = ({
           <span>{noti.msg}</span>
         </div>
       )}
-
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 md:p-6 space-y-4">
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">Tên của bạn (Để lưu log):</label>
-            <input
-              type="text"
-              value={nameInput}
-              onChange={handleNameChange}
-              placeholder="VD: Kế toán A"
-              className="w-full bg-white border border-slate-250 text-slate-800 text-xs px-3.5 py-2.5 rounded-lg focus:outline-hidden focus:border-emerald-500"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-slate-600 mb-1">Web App URL (Google Apps Script):</label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <input
-                type="text"
-                value={urlInput}
-                onChange={handleUrlChange}
-                placeholder="https://script.google.com/macros/s/.../exec"
-                className="flex-1 bg-white border border-slate-250 text-slate-800 text-xs px-3.5 py-2.5 rounded-lg focus:outline-hidden focus:border-emerald-500"
-              />
-              <button
-                type="button"
-                onClick={handleSaveConfig}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition"
-              >
-                Lưu cấu hình
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="pt-3 border-t border-slate-200 flex flex-col md:flex-row md:items-center gap-4.5 text-xs font-semibold text-slate-600">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={config.autoPull} onChange={(e) => togglePullEnabled(e.target.checked)} className="accent-emerald-600 w-4 h-4" />
-            <span>Tự động tải cấu hình khi mở app</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={config.autoPush} onChange={(e) => togglePushEnabled(e.target.checked)} className="accent-emerald-600 w-4 h-4" />
-            <span>Tự động đẩy cấu hình lên khi có thay đổi</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={config.logsEnabled} onChange={(e) => toggleLogsEnabled(e.target.checked)} className="accent-emerald-600 w-4 h-4" />
-            <span>Lưu nhật ký thao tác nhóm lên cloud</span>
-          </label>
-        </div>
-      </div>
 
       <div className="bg-slate-50 rounded-xl p-5 border border-slate-150 flex flex-col justify-between">
         <h3 className="font-bold text-xs uppercase text-slate-500 mb-3 flex items-center gap-1.5">
