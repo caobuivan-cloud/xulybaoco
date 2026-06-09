@@ -1,0 +1,8 @@
+{
+  "name": "Xử lý báo có ngân hàng",
+  "description": "Công cụ đọc file Excel ngân hàng, phân tích keyword gán thông tin khách hàng, đánh số phiếu tự động theo ngày và xuất file excel lọc theo yêu cầu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
