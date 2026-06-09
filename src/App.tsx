@@ -155,6 +155,14 @@ export default function App() {
   // Load rules on startup with Google Sheets auto-pull check
   useEffect(() => {
     const startupLoad = async () => {
+      // Yêu cầu nhập email nếu chưa có
+      let currentEmail = localStorage.getItem("google_sheets_user_name");
+      if (!currentEmail || currentEmail === "Kế toán viên" || currentEmail === "Kế toán viên (Chưa đặt tên)") {
+        currentEmail = prompt("Vui lòng nhập Email của bạn để lưu lịch sử thao tác:") || "Kế toán viên";
+        localStorage.setItem("google_sheets_user_name", currentEmail);
+      }
+      userEmailRef.current = currentEmail;
+
       // 1. Load local rules first
       const local = loadRules();
       setRules(local);

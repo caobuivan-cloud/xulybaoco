@@ -55,8 +55,6 @@ export async function writeActionLogToSheet(
 ): Promise<void> {
   if (!webAppUrl) return;
   try {
-    const browserDetails = `Kiểu: ${navigator.userAgent.substring(0, 75)}...`;
-    
     await fetch(webAppUrl, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -64,8 +62,7 @@ export async function writeActionLogToSheet(
         action: "log",
         user: userStr,
         actionName,
-        actionDetails,
-        browserDetails
+        actionDetails
       })
     });
   } catch (err) {
