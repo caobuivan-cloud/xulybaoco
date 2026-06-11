@@ -146,3 +146,44 @@ export async function pushRulesToGoogleSheet(rules: KeywordRule[], webAppUrl: st
     throw err;
   }
 }
+
+export function getPortalUserEmail(): Promise<string | null> {
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open("firebaseLocalStorageDb");
+      request.onerror = () => resolve(null);
+      request.onsuccess = (event: any) => {
+        const db = event.target.result;
+        if (!db.objectStoreNames.contains("firebaseLocalStorage")) {
+          db.close();
+          resolve(null);
+          return;
+        }
+        const transaction = db.transaction(["firebaseLocalStorage"], "readonly");
+        const store = transaction.objectStore("firebaseLocalStorage");
+        const getAllRequest = store.getAll();
+        getAllRequest.onsuccess = () => {
+          const results = getAllRequest.result;
+          if (results && results.length > 0) {
+            for (const item of results) {
+              if (item && item.value && item.value.email) {
+                db.close();
+                resolve(item.value.email);
+                return;
+              }
+            }
+          }
+          db.close();
+          resolve(null);
+        };
+        getAllRequest.onerror = () => {
+          db.close();
+          resolve(null);
+        };
+      };
+    } catch (e) {
+      resolve(null);
+    }
+  });
+}
+

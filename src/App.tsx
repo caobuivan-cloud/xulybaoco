@@ -44,7 +44,8 @@ import {
   isTokenValid,
   pullRulesFromGoogleSheet,
   pushRulesToGoogleSheet,
-  writeActionLogToSheet
+  writeActionLogToSheet,
+  getPortalUserEmail
 } from "./utils/googleSheetsSync";
 
 export default function App() {
@@ -52,6 +53,8 @@ export default function App() {
   
   // State to hold active Google user's email
   const userEmailRef = useRef("Kế toán viên");
+  // State to hold the email retrieved from portal for header display
+  const [portalEmail, setPortalEmail] = useState<string | null>(null);
   
   // Helper to log user actions to Google Sheet
   const logUserActionOnSheets = async (actionName: string, actionDetails: string) => {
@@ -159,11 +162,24 @@ export default function App() {
       const local = loadRules();
       setRules(local);
 
-      // 2. Check Sheets Auto Pull
-      const sheetCfg = loadSheetsConfig();
-
-      let currentEmail = localStorage.getItem("google_sheets_user_name") || "Kế toán viên";
+      // 2. Retrieve portal email or fallback to google_sheets_user_name
+      let currentEmail = "Kế toán viên";
+      try {
+        const portalMail = await getPortalUserEmail();
+        if (portalMail) {
+          currentEmail = portalMail;
+          setPortalEmail(portalMail);
+        } else {
+          currentEmail = localStorage.getItem("google_sheets_user_name") || "Kế toán viên";
+        }
+      } catch (err) {
+        console.error("Failed to retrieve user email from portal:", err);
+        currentEmail = localStorage.getItem("google_sheets_user_name") || "Kế toán viên";
+      }
       userEmailRef.current = currentEmail;
+
+      // 3. Check Sheets Auto Pull
+      const sheetCfg = loadSheetsConfig();
 
       if (sheetCfg.syncEnabled && sheetCfg.autoPull && sheetCfg.webAppUrl) {
         try {
@@ -1069,6 +1085,11 @@ export default function App() {
           <h1 className="text-lg font-semibold tracking-tight">TransAuto <span className="text-gray-400 font-normal">| Bank Processor</span></h1>
         </div>
         <div className="flex items-center gap-4">
+          {portalEmail && (
+            <span className="text-sm text-slate-600 font-medium" title={portalEmail}>
+              {portalEmail}
+            </span>
+          )}
           {fileData ? (
             <>
               <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-ellipsis max-w-[240px] md:max-w-xs overflow-hidden whitespace-nowrap font-medium">
