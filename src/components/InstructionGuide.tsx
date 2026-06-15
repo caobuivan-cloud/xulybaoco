@@ -88,7 +88,7 @@ export const InstructionGuide: React.FC = () => {
               Lọc & Xuất File Excel
             </h3>
             <p className="text-slate-500 text-xs mt-2 leading-relaxed">
-              Bộ lọc nâng cao tự động **loại bỏ các dòng có số tiền &lt;= 0** (Chỉ giữ lại các dòng thu thực tế &gt; 0 tại Cột D). Đồng thời tạo tiêu đề cột mới tinh gọn bao gồm các trường chuẩn hóa để bạn tải xuống dưới dạng file Excel sẵn sàng nộp báo cáo hoặc nhập liệu vào phần mềm Misa/ERP.
+              Bộ lọc tự động **loại bỏ các dòng có số tiền &lt;= 0**. Hỗ trợ xuất 3 mẫu: <strong>Mẫu báo có</strong>, <strong>Mẫu báo nợ</strong>, và <strong>Bảng Phân Tích</strong>. Khi xuất Báo Nợ, hãy chọn đúng cột số tiền chi trên UI để dữ liệu hạch toán được chính xác.
             </p>
           </div>
           <div className="text-[10px] text-amber-600 font-semibold bg-amber-50 border border-amber-100 mt-4 px-2 py-1 rounded inline-block text-center select-none">
@@ -113,7 +113,11 @@ export const InstructionGuide: React.FC = () => {
           </li>
           <li className="flex items-center gap-2">
             <ChevronRight className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-            Cột Số Tiền (Cột D): chấp nhận số thô hoặc số đã định dạng tiền tệ chuyên sâu có chứa phân tách phần nghìn dấu chấm (kiểu Việt Nam) hoặc dấu phẩy (kiểu Mỹ).
+            Cột Số Tiền: chấp nhận số thô hoặc số đã định dạng tiền tệ chuyên sâu có chứa phân tách phần nghìn dấu chấm (kiểu Việt Nam) hoặc dấu phẩy (kiểu Mỹ).
+          </li>
+          <li className="flex items-center gap-2">
+            <ChevronRight className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+            Khi hạch toán Báo Nợ (Debit Note): Kế toán chỉ định "Cột số tiền" tương ứng với cột Phát sinh Nợ (hoặc Phát sinh Chi) trên file sổ phụ ngân hàng. Cột tài khoản Nợ và Có sẽ được tự động đảo vị trí trên file Excel xuất ra.
           </li>
           <li className="flex items-center gap-2">
             <ChevronRight className="w-3.5 h-3.5 text-sky-500 shrink-0" />

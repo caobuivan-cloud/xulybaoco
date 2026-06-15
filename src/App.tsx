@@ -91,7 +91,7 @@ export default function App() {
   });
 
   // Voucher parameters settings
-  const [voucherPrefix, setVoucherPrefix] = useState("PT");
+  const [voucherPrefix, setVoucherPrefix] = useState("BC");
   const [voucherSuffix, setVoucherSuffix] = useState(() => String(new Date().getFullYear()).slice(-2));
   const [voucherStartNumStr, setVoucherStartNumStr] = useState("0001");
   const [voucherIncrementType, setVoucherIncrementType] = useState<"prefix" | "suffix">("prefix");
@@ -103,7 +103,7 @@ export default function App() {
   const [exportMaKh, setExportMaKh] = useState(() => localStorage.getItem("exportMaKh") || "KH000134");
   const [exportTkNo, setExportTkNo] = useState(() => localStorage.getItem("exportTkNo") || "11215");
   const [exportTkCo, setExportTkCo] = useState(() => localStorage.getItem("exportTkCo") || "1311");
-  const [exportFormatMode, setExportFormatMode] = useState<"accounting" | "raw">("accounting");
+  const [exportFormatMode, setExportFormatMode] = useState<"accounting" | "debit" | "raw">("accounting");
   
   // Manual overrides mapping index -> customer override
   const [manualOverrides, setManualOverrides] = useState<{ [index: number]: { code: string; name: string; keyword?: string } }>({});
@@ -943,6 +943,33 @@ export default function App() {
     let worksheet;
     let sheetName = "Sổ Phụ Đã Phân Loại";
 
+    const getFormattedDateInfo = (dateStr: string) => {
+      const parts = dateStr.split('-');
+      if (parts.length === 3) {
+        const y = parts[0];
+        const m = parts[1];
+        const d = parts[2];
+        return {
+          dayMonth: `${d}/${m}`,
+          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
+        };
+      }
+      const parts2 = dateStr.split('/');
+      if (parts2.length === 3) {
+        const d = parts2[0];
+        const m = parts2[1];
+        const y = parts2[2];
+        return {
+          dayMonth: `${d.padStart(2, '0')}/${m.padStart(2, '0')}`,
+          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
+        };
+      }
+      return {
+        dayMonth: "N/A",
+        mdy: dateStr
+      };
+    };
+
     if (exportFormatMode === "accounting") {
       sheetName = "Kế toán Sổ Phụ";
       
@@ -956,33 +983,6 @@ export default function App() {
         "(ngay_ct)", "(ma_qs)", "(so_ct)", "(Tk)", "(Tk_i)", "(ma_nt)",
         "(ty_gia)", "(ma_kh_i)", "(tien_nt)", "(tien)", "(dien_giai_i)", "(ma_vv_i)"
       ];
-
-      const getFormattedDateInfo = (dateStr: string) => {
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-          const y = parts[0];
-          const m = parts[1];
-          const d = parts[2];
-          return {
-            dayMonth: `${d}/${m}`,
-            mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
-          };
-        }
-        const parts2 = dateStr.split('/');
-        if (parts2.length === 3) {
-          const d = parts2[0];
-          const m = parts2[1];
-          const y = parts2[2];
-          return {
-            dayMonth: `${d.padStart(2, '0')}/${m.padStart(2, '0')}`,
-            mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
-          };
-        }
-        return {
-          dayMonth: "N/A",
-          mdy: dateStr
-        };
-      };
 
       const headers = headers1.map((h, i) => `${h}\n${headers2[i]}`);
       const aoaData = [headers];
@@ -1033,6 +1033,69 @@ export default function App() {
         { wch: 45 },  // P: dien_giai_i
         { wch: 12 }   // Q: ma_vv_i
       ];
+    } else if (exportFormatMode === "debit") {
+      sheetName = "Kế toán Sổ Phụ";
+      
+      const headers1 = [
+        "Mã ĐVCS", "Mã gd", "Mã ncc", "Người nhận tiền", "Diễn giải chung", 
+        "Ngày c.từ:D", "Quyển c.từ", "Số c.từ", "Tk có", "Tk nợ", "Mã n.tệ", 
+        "TGGS1:R", "Mã ncc", "Ps nợ n.tệ:N1", "Ps nợ:N0", "Diễn giải chi tiết", "Mã dự án"
+      ];
+      const headers2 = [
+        "(ma_dvcs)", "(ma_gd)", "(ma_kh)", "(ong_ba)", "(dien_giai)",
+        "(ngay_ct)", "(ma_qs)", "(so_ct)", "(Tk)", "(Tk_i)", "(ma_nt)",
+        "(ty_gia)", "(ma_kh_i)", "(tien_nt)", "(tien)", "(dien_giaii)", "(ma_vv_i)"
+      ];
+
+      const headers = headers1.map((h, i) => `${h}\n${headers2[i]}`);
+      const aoaData = [headers];
+      
+      finalProcessedRows.forEach((row) => {
+        const dateInfo = getFormattedDateInfo(row.dateStr);
+        const rowData = [
+          exportMaDvcs,                                 // A: ma_dvcs
+          exportMaGd,                                   // B: ma_gd
+          exportMaKh,                                   // C: ma_kh
+          "",                                           // D: ong_ba (Người nhận tiền)
+          `nhập ngân hàng ngày ${dateInfo.dayMonth}`,   // E: dien_giai
+          dateInfo.mdy,                                 // F: ngay_ct
+          "",                                           // G: ma_qs
+          row.voucherNo,                                // H: so_ct
+          exportTkCo,                                   // I: Tk (Tk có)
+          exportTkNo,                                   // J: Tk_i (Tk nợ)
+          "",                                           // K: ma_nt
+          "",                                           // L: ty_gia (TGGS1:R)
+          row.customerCode || "",                       // M: ma_kh_i (Mã ncc)
+          "",                                           // N: tien_nt (Ps nợ n.tệ:N1)
+          row.amount,                                   // O: tien (Ps nợ:N0)
+          row.description,                              // P: dien_giaii
+          ""                                            // Q: ma_vv_i
+        ];
+        aoaData.push(rowData);
+      });
+
+      worksheet = XLSX.utils.aoa_to_sheet(aoaData);
+
+      // Set nice column widths for the template
+      worksheet["!cols"] = [
+        { wch: 10 },  // A: ma_dvcs
+        { wch: 8 },   // B: ma_gd
+        { wch: 14 },  // C: ma_kh
+        { wch: 15 },  // D: ong_ba
+        { wch: 28 },  // E: dien_giai
+        { wch: 12 },  // F: ngay_ct
+        { wch: 12 },  // G: ma_qs
+        { wch: 15 },  // H: so_ct
+        { wch: 10 },  // I: Tk
+        { wch: 10 },  // J: Tk_i
+        { wch: 10 },  // K: ma_nt
+        { wch: 10 },  // L: ty_gia
+        { wch: 15 },  // M: ma_kh_i
+        { wch: 15 },  // N: tien_nt
+        { wch: 15 },  // O: tien
+        { wch: 45 },  // P: dien_giaii
+        { wch: 12 }   // Q: ma_vv_i
+      ];
     } else {
       // Build standard layout
       const excelBody = finalProcessedRows.map((row) => ({
@@ -1042,7 +1105,7 @@ export default function App() {
         "Mã đối tượng": row.customerCode,
         "Tên đối tượng có giao dịch": row.customerName,
         "Mô tả diễn giải ngân hàng": row.description,
-        "Số phát sinh tiền Có (Cột D)": row.amount,
+        "Số tiền phát sinh": row.amount,
         "Từ khóa đối chiếu": row.matchedKeyword || "Khách vãng lai"
       }));
 
@@ -1064,7 +1127,11 @@ export default function App() {
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
     const cleanName = fileData?.fileName.replace(/\.[^/.]+$/, "") || "Phan_Tich_So_Phu";
-    const suffix = exportFormatMode === "accounting" ? "nhap_lieu_kho" : "da_xu_ly";
+    const suffix = exportFormatMode === "accounting" 
+      ? "hach_toan_bao_co" 
+      : exportFormatMode === "debit" 
+      ? "hach_toan_bao_no" 
+      : "da_xu_ly";
     const outFilename = `${cleanName}_${suffix}_${Date.now().toString().substring(8)}.xlsx`;
 
     XLSX.writeFile(workbook, outFilename);
@@ -1072,7 +1139,13 @@ export default function App() {
     // Log export action to Google Sheets
     logUserActionOnSheets(
       "Xuất file Excel", 
-      `Kế toán xuất thành công file báo cáo "${outFilename}" (${finalProcessedRows.length} dòng), định dạng mẫu: ${exportFormatMode === "accounting" ? "Nhập liệu kế toán" : "Danh sách đối chiếu chuẩn"}`
+      `Kế toán xuất thành công file báo cáo "${outFilename}" (${finalProcessedRows.length} dòng), định dạng mẫu: ${
+        exportFormatMode === "accounting" 
+          ? "Nhập liệu Báo Có" 
+          : exportFormatMode === "debit" 
+          ? "Nhập liệu Báo Nợ" 
+          : "Bảng phân tích đối chiếu"
+      }`
     );
   };
 
@@ -1584,7 +1657,7 @@ export default function App() {
 
                           {/* Ma Khach default */}
                           <div>
-                            <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1" title="ma_kh">MÃ KHÁCH MẶC ĐỊNH (CỘT C)</label>
+                            <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1" title="ma_kh">MÃ KH/NCC MẶC ĐỊNH (CỘT C)</label>
                             <input
                               type="text"
                               placeholder="Mặc định: KH000134"
@@ -1601,7 +1674,7 @@ export default function App() {
                           {/* TK no & TK co in a Row */}
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1" title="Tk">TK NỢ (CỘT I)</label>
+                              <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1" title="Tk">TK NỢ</label>
                               <input
                                 type="text"
                                 placeholder="Mặc định: 11215"
@@ -1615,7 +1688,7 @@ export default function App() {
                               />
                             </div>
                             <div>
-                              <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1" title="Tk_i">TK CÓ (CỘT J)</label>
+                              <label className="block text-[10px] font-bold text-slate-700 uppercase mb-1" title="Tk_i">TK CÓ</label>
                               <input
                                 type="text"
                                 placeholder="Mặc định: 1311"
@@ -1648,8 +1721,8 @@ export default function App() {
 
                         {/* Format selector */}
                         <div>
-                          <label className="block text-[10px] font-bold text-indigo-900/85 uppercase mb-1">KIỂU EXCEL XUẤT BAN</label>
-                          <div className="grid grid-cols-2 gap-1.5 bg-indigo-100/30 p-1 rounded-lg border border-indigo-100/50">
+                          <label className="block text-[10px] font-bold text-indigo-900/85 uppercase mb-1">Mẫu excel xuất</label>
+                           <div className="grid grid-cols-3 gap-1.5 bg-indigo-100/30 p-1 rounded-lg border border-indigo-100/50">
                             <button
                               type="button"
                               onClick={() => setExportFormatMode("accounting")}
@@ -1660,6 +1733,17 @@ export default function App() {
                               }`}
                             >
                               Mẫu báo có
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setExportFormatMode("debit")}
+                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${
+                                exportFormatMode === "debit"
+                                  ? "bg-white text-indigo-750 shadow-sm"
+                                  : "text-indigo-900/60 hover:text-indigo-900"
+                              }`}
+                            >
+                              Mẫu báo nợ
                             </button>
                             <button
                               type="button"
@@ -1695,7 +1779,11 @@ export default function App() {
                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm hover:shadow transition flex items-center justify-center gap-2 text-sm mt-5 tracking-wide cursor-pointer text-center select-none active:scale-95 duration-100"
                       >
                         <FileDown className="w-5 h-5 text-indigo-100" />
-                        {exportFormatMode === "accounting" ? "XUẤT EXCEL" : "XUẤT BẢNG PHÂN TÍCH"}
+                        {exportFormatMode === "accounting"
+                          ? "XUẤT EXCEL BÁO CÓ"
+                          : exportFormatMode === "debit"
+                          ? "XUẤT EXCEL BÁO NỢ"
+                          : "XUẤT BẢNG PHÂN TÍCH"}
                       </button>
                     </div>
 

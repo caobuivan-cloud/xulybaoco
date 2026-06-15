@@ -65,14 +65,25 @@ export function cleanNumericAmount(val: any): number {
 export function parseDateToString(val: any): string {
   if (val === null || val === undefined) return "N/A";
   
+  // Handle JS Date object
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return "N/A";
+    const dd = String(val.getDate()).padStart(2, "0");
+    const mm = String(val.getMonth() + 1).padStart(2, "0");
+    const yyyy = val.getFullYear();
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  
   // If it's a numeric serial from Excel (e.g. 45000)
   if (typeof val === "number") {
+    if (isNaN(val)) return "N/A";
     // Avoid small values triggering odd dates
     if (val < 20000) return String(val);
     try {
       const utcDays = Math.floor(val - 25569);
       const utcValue = utcDays * 86400;
       const dateInfo = new Date(utcValue * 1000);
+      if (isNaN(dateInfo.getTime())) return "N/A";
       
       const dd = String(dateInfo.getDate()).padStart(2, "0");
       const mm = String(dateInfo.getMonth() + 1).padStart(2, "0");
@@ -86,29 +97,54 @@ export function parseDateToString(val: any): string {
   const str = String(val).trim();
   if (!str) return "N/A";
   
-  // Try pattern DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
-  const dmYRegex = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})/;
-  const matchDmY = str.match(dmYRegex);
-  if (matchDmY) {
-    const d = matchDmY[1].padStart(2, "0");
-    const m = matchDmY[2].padStart(2, "0");
-    const y = matchDmY[3];
-    return `${y}-${m}-${d}`;
+  // Try matching general date patterns (e.g. DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD)
+  const datePartsRegex = /^(\d{1,4})[/\-.](\d{1,2})[/\-.](\d{1,4})/;
+  const match = str.match(datePartsRegex);
+  if (match) {
+    const p1 = parseInt(match[1], 10);
+    const p2 = parseInt(match[2], 10);
+    const p3 = parseInt(match[3], 10);
+    
+    // Check if it's YYYY-MM-DD
+    if (p1 > 1000 && p2 <= 12 && p3 <= 31) {
+      return `${p1}-${String(p2).padStart(2, "0")}-${String(p3).padStart(2, "0")}`;
+    }
+    
+    // Check if it's DD/MM/YYYY or MM/DD/YYYY (year is at the end)
+    if (p3 > 1000) {
+      const year = p3;
+      let day = p1;
+      let month = p2;
+      
+      // Intelligent detection:
+      // If p1 > 12 and p2 <= 12: it must be DD/MM/YYYY (e.g., 29/05/2026)
+      if (p1 > 12 && p2 <= 12) {
+        day = p1;
+        month = p2;
+      }
+      // If p2 > 12 and p1 <= 12: it must be MM/DD/YYYY (e.g., 05/29/2026)
+      else if (p2 > 12 && p1 <= 12) {
+        day = p2;
+        month = p1;
+      }
+      // Default to DD/MM/YYYY for standard Vietnamese format
+      else {
+        day = p1;
+        month = p2;
+      }
+      
+      return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
   }
-  
-  // Try pattern YYYY/MM/DD or YYYY-MM-DD
-  const yMdRegex = /^(\d{4})[/\-.](\d{1,2})[/\-.](\d{1,2})/;
-  const matchYMd = str.match(yMdRegex);
-  if (matchYMd) {
-    const y = matchYMd[1];
-    const m = matchYMd[2].padStart(2, "0");
-    const d = matchYMd[3].padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-  
-  // Fallback to substring if it starts like a date
-  if (str.length >= 10 && /^\d/.test(str)) {
-    return str.substring(0, 10);
+
+  // Fallback to native Date parsing if possible
+  const parsedMs = Date.parse(str);
+  if (!isNaN(parsedMs)) {
+    const d = new Date(parsedMs);
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${yyyy}-${mm}-${dd}`;
   }
   
   return str;
