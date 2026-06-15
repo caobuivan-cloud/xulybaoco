@@ -951,7 +951,8 @@ export default function App() {
         const d = parts[2];
         return {
           dayMonth: `${d}/${m}`,
-          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
+          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`,
+          iso: `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
         };
       }
       const parts2 = dateStr.split('/');
@@ -961,12 +962,14 @@ export default function App() {
         const y = parts2[2];
         return {
           dayMonth: `${d.padStart(2, '0')}/${m.padStart(2, '0')}`,
-          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
+          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`,
+          iso: `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
         };
       }
       return {
         dayMonth: "N/A",
-        mdy: dateStr
+        mdy: dateStr,
+        iso: dateStr
       };
     };
 
@@ -995,7 +998,7 @@ export default function App() {
           exportMaKh,                                   // C: ma_kh
           "",                                           // D: ong_ba
           `nhập ngân hàng ngày ${dateInfo.dayMonth}`,   // E: dien_giai
-          dateInfo.mdy,                                 // F: ngay_ct
+          new Date(dateInfo.iso),                                 // F: ngay_ct (Date object)
           "",                                           // G: ma_qs
           row.voucherNo,                                // H: so_ct
           exportTkNo,                                   // I: Tk
@@ -1058,7 +1061,7 @@ export default function App() {
           exportMaKh,                                   // C: ma_kh
           "",                                           // D: ong_ba (Người nhận tiền)
           `nhập ngân hàng ngày ${dateInfo.dayMonth}`,   // E: dien_giai
-          dateInfo.mdy,                                 // F: ngay_ct
+          new Date(dateInfo.iso),                                 // F: ngay_ct (Date object)
           "",                                           // G: ma_qs
           row.voucherNo,                                // H: so_ct
           exportTkCo,                                   // I: Tk (Tk có)
