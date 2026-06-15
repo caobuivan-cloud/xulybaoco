@@ -984,7 +984,8 @@ export default function App() {
         };
       };
 
-      const aoaData = [headers1, headers2];
+      const headers = headers1.map((h, i) => `${h}\n${headers2[i]}`);
+      const aoaData = [headers];
       
       finalProcessedRows.forEach((row) => {
         const dateInfo = getFormattedDateInfo(row.dateStr);
@@ -1658,7 +1659,7 @@ export default function App() {
                                   : "text-indigo-900/60 hover:text-indigo-900"
                               }`}
                             >
-                              Mẫu Nhập Liệu
+                              Mẫu báo có
                             </button>
                             <button
                               type="button"
@@ -1694,7 +1695,7 @@ export default function App() {
                         className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm hover:shadow transition flex items-center justify-center gap-2 text-sm mt-5 tracking-wide cursor-pointer text-center select-none active:scale-95 duration-100"
                       >
                         <FileDown className="w-5 h-5 text-indigo-100" />
-                        {exportFormatMode === "accounting" ? "XUẤT EXCEL THEO MẪU" : "XUẤT BẢNG PHÂN TÍCH"}
+                        {exportFormatMode === "accounting" ? "XUẤT EXCEL" : "XUẤT BẢNG PHÂN TÍCH"}
                       </button>
                     </div>
 
