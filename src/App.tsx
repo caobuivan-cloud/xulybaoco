@@ -50,12 +50,12 @@ import {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"processor" | "rules" | "googleSheets" | "analytics" | "guide">("processor");
-  
+
   // State to hold active Google user's email
   const userEmailRef = useRef("Kế toán viên");
   // State to hold the email retrieved from portal for header display
   const [portalEmail, setPortalEmail] = useState<string | null>(null);
-  
+
   // Helper to log user actions to Google Sheet
   const logUserActionOnSheets = async (actionName: string, actionDetails: string) => {
     const sheetCfg = loadSheetsConfig();
@@ -76,7 +76,7 @@ export default function App() {
 
   // Keyword mappings rules
   const [rules, setRules] = useState<KeywordRule[]>([]);
-  
+
   // File state
   const [fileData, setFileData] = useState<FileData | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -104,10 +104,10 @@ export default function App() {
   const [exportTkNo, setExportTkNo] = useState(() => localStorage.getItem("exportTkNo") || "11215");
   const [exportTkCo, setExportTkCo] = useState(() => localStorage.getItem("exportTkCo") || "1311");
   const [exportFormatMode, setExportFormatMode] = useState<"accounting" | "debit" | "raw">("accounting");
-  
+
   // Manual overrides mapping index -> customer override
   const [manualOverrides, setManualOverrides] = useState<{ [index: number]: { code: string; name: string; keyword?: string } }>({});
-  
+
   // Choose to assign manually by customer code or check keywords
   const [assignDropdownMode, setAssignDropdownMode] = useState<"code" | "keyword">("keyword");
 
@@ -117,7 +117,7 @@ export default function App() {
 
   const [activeSheet, setActiveSheet] = useState("");
   const [processedRows, setProcessedRows] = useState<ProcessedRow[]>([]);
-  
+
   // Filters for preview table
   const [previewSearch, setPreviewSearch] = useState("");
   const [previewFilterMatch, setPreviewFilterMatch] = useState<"all" | "matched" | "unmatched" | "overridden" | "low_confidence">("all");
@@ -152,7 +152,7 @@ export default function App() {
   const [activeExcelFilterRect, setActiveExcelFilterRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   const [excelFilterSearch, setExcelFilterSearch] = useState("");
   const [tempSelectedVals, setTempSelectedVals] = useState<string[]>([]);
-  
+
   const [showConfigPanel, setShowConfigPanel] = useState(true);
 
   // Load rules on startup with Google Sheets auto-pull check
@@ -202,7 +202,7 @@ export default function App() {
   const handleRulesChange = async (updatedRules: KeywordRule[]) => {
     setRules(updatedRules);
     saveRules(updatedRules);
-    
+
     // Auto re-process if files loaded
     if (fileData) {
       triggerProcess(fileData.rawRows, columnSettings, updatedRules);
@@ -239,7 +239,7 @@ export default function App() {
 
       // Log action and check auto push
       logUserActionOnSheets("Khôi phục mặc định", `Đã khôi phục danh sách từ khóa mặc định (${defaults.length} quy tắc)`);
-      
+
       const sheetCfg = loadSheetsConfig();
       if (sheetCfg.syncEnabled && sheetCfg.autoPush && sheetCfg.webAppUrl) {
         try {
@@ -266,7 +266,7 @@ export default function App() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       processFile(e.dataTransfer.files[0]);
     }
@@ -287,10 +287,10 @@ export default function App() {
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        
+
         // Use header: 1 to parse as 2D array, defval: "" to prevent missing indices
         const raw = XLSX.utils.sheet_to_json<any[][]>(worksheet, { header: 1, defval: "" });
-        
+
         // Auto-detect header row and columns:
         // Scan first 10 rows for common bank headers
         let detectedHeaderRow = 0;
@@ -301,7 +301,7 @@ export default function App() {
         for (let rIndex = 0; rIndex < Math.min(12, raw.length); rIndex++) {
           const row = raw[rIndex];
           if (!row || !Array.isArray(row)) continue;
-          
+
           let hasDateKeyword = false;
           let hasDescKeyword = false;
           let hasAmountKeyword = false;
@@ -353,7 +353,7 @@ export default function App() {
         setFileData(fDetails);
         setActiveSheet(sheetName);
         triggerProcess(raw as unknown as any[][], initialSettings, rules);
-        
+
         // Log action on Sheets
         logUserActionOnSheets("Tải file sổ phụ", `Tải thành công file sổ phụ "${file.name}" (${raw.length} dòng, trang "${sheetName}")`);
       } catch (err) {
@@ -405,12 +405,12 @@ export default function App() {
 
     // Find row detail and log
     const rowDetail = processedRows.find(r => r.originalIndex === rowIndexOnProcessed);
-    const detailText = rowDetail 
-      ? `"${rowDetail.description.substring(0, 50)}..." (Số tiền: ${rowDetail.amount.toLocaleString()}đ)` 
+    const detailText = rowDetail
+      ? `"${rowDetail.description.substring(0, 50)}..." (Số tiền: ${rowDetail.amount.toLocaleString()}đ)`
       : `dòng ${rowIndexOnProcessed}`;
-    
+
     logUserActionOnSheets(
-      "Gán tay khách hàng", 
+      "Gán tay khách hàng",
       `Kế toán gán tay giao dịch ${detailText} sang mã đối tượng: "${code}" (${name || "Khách Vãng Lai"})${keyword ? `, từ khóa khớp: "${keyword}"` : ""}`
     );
   };
@@ -493,12 +493,12 @@ export default function App() {
         return row.voucherNo;
       case "customerCodeOrKw":
         if (assignDropdownMode === "code") {
-          return row.isOverridden 
-            ? `${row.customerCode} ✍️` 
+          return row.isOverridden
+            ? `${row.customerCode} ✍️`
             : (row.customerCode || "KH-VANGLAI");
         } else {
-          return row.isOverridden 
-            ? `${row.customerCode} ✍️` 
+          return row.isOverridden
+            ? `${row.customerCode} ✍️`
             : (row.matchedKeyword || "(Chưa đối chiếu)");
         }
       case "customerName":
@@ -568,9 +568,9 @@ export default function App() {
     if (!activeExcelFilterRect) return null;
     const distinctItems = getDistinctValues(colKey);
     const lowercaseSearch = excelFilterSearch.toLowerCase();
-    
+
     // Filter checklist by the search query inside the dropdown
-    const filteredItems = distinctItems.filter(item => 
+    const filteredItems = distinctItems.filter(item =>
       item.label.toLowerCase().includes(lowercaseSearch) ||
       item.value.toLowerCase().includes(lowercaseSearch)
     );
@@ -601,7 +601,7 @@ export default function App() {
     }
 
     return (
-      <div 
+      <div
         style={{
           position: "fixed",
           top: `${topVal}px`,
@@ -724,7 +724,7 @@ export default function App() {
                   <input
                     type="checkbox"
                     checked={isChecked}
-                    onChange={() => {}} // Controlled by wrapper div click
+                    onChange={() => { }} // Controlled by wrapper div click
                     className="w-3.5 h-3.5 accent-indigo-650 rounded text-indigo-600 cursor-pointer shrink-0"
                   />
                   <span className="text-[11px] font-medium text-slate-700 truncate select-none cursor-pointer" title={item.label}>
@@ -843,7 +843,7 @@ export default function App() {
           return false;
         }
       }
-      
+
       // Accuracy filter
       if (colFilters.accuracyRate !== "all") {
         if (colFilters.accuracyRate === "low") {
@@ -904,13 +904,13 @@ export default function App() {
   const handleSettingsUpdate = (updates: Partial<ColumnSettings>) => {
     const updated = { ...columnSettings, ...updates };
     setColumnSettings(updated);
-    
+
     // If header row updated, rebuild headers representation
     if (fileData) {
       const raw = fileData.rawRows;
       const hRow = updated.headerRow;
       const newHeaders = (raw[hRow] || []).map((h: any, i: number) => String(h || `Cột ${indexToColumnLetter(i)}`));
-      
+
       const newDetails = {
         ...fileData,
         headers: newHeaders,
@@ -951,8 +951,7 @@ export default function App() {
         const d = parts[2];
         return {
           dayMonth: `${d}/${m}`,
-          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`,
-          iso: `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
         };
       }
       const parts2 = dateStr.split('/');
@@ -962,23 +961,21 @@ export default function App() {
         const y = parts2[2];
         return {
           dayMonth: `${d.padStart(2, '0')}/${m.padStart(2, '0')}`,
-          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`,
-          iso: `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
+          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
         };
       }
       return {
         dayMonth: "N/A",
-        mdy: dateStr,
-        iso: dateStr
+        mdy: dateStr
       };
     };
 
     if (exportFormatMode === "accounting") {
       sheetName = "Kế toán Sổ Phụ";
-      
+
       const headers1 = [
-        "Mã ĐVCS", "Mã gd", "Mã khách", "Người nộp tiền", "Diễn giải chung", 
-        "Ngày c.từ:D", "Quyển c.từ", "Số c.từ", "Tk nợ", "Tk có", "Mã n.tệ", 
+        "Mã ĐVCS", "Mã gd", "Mã khách", "Người nộp tiền", "Diễn giải chung",
+        "Ngày c.từ:D", "Quyển c.từ", "Số c.từ", "Tk nợ", "Tk có", "Mã n.tệ",
         "TGGD:R", "Mã khách", "Ps có n.tệ:N1", "Ps có:N0", "Diễn giải chi tiết", "Mã dự án"
       ];
       const headers2 = [
@@ -989,7 +986,7 @@ export default function App() {
 
       const headers = headers1.map((h, i) => `${h}\n${headers2[i]}`);
       const aoaData = [headers];
-      
+
       finalProcessedRows.forEach((row) => {
         const dateInfo = getFormattedDateInfo(row.dateStr);
         const rowData = [
@@ -998,7 +995,7 @@ export default function App() {
           exportMaKh,                                   // C: ma_kh
           "",                                           // D: ong_ba
           `nhập ngân hàng ngày ${dateInfo.dayMonth}`,   // E: dien_giai
-          new Date(dateInfo.iso),                                 // F: ngay_ct (Date object)
+          dateInfo.mdy,                                 // F: ngay_ct
           "",                                           // G: ma_qs
           row.voucherNo,                                // H: so_ct
           exportTkNo,                                   // I: Tk
@@ -1038,10 +1035,10 @@ export default function App() {
       ];
     } else if (exportFormatMode === "debit") {
       sheetName = "Kế toán Sổ Phụ";
-      
+
       const headers1 = [
-        "Mã ĐVCS", "Mã gd", "Mã ncc", "Người nhận tiền", "Diễn giải chung", 
-        "Ngày c.từ:D", "Quyển c.từ", "Số c.từ", "Tk có", "Tk nợ", "Mã n.tệ", 
+        "Mã ĐVCS", "Mã gd", "Mã ncc", "Người nhận tiền", "Diễn giải chung",
+        "Ngày c.từ:D", "Quyển c.từ", "Số c.từ", "Tk có", "Tk nợ", "Mã n.tệ",
         "TGGS1:R", "Mã ncc", "Ps nợ n.tệ:N1", "Ps nợ:N0", "Diễn giải chi tiết", "Mã dự án"
       ];
       const headers2 = [
@@ -1052,7 +1049,7 @@ export default function App() {
 
       const headers = headers1.map((h, i) => `${h}\n${headers2[i]}`);
       const aoaData = [headers];
-      
+
       finalProcessedRows.forEach((row) => {
         const dateInfo = getFormattedDateInfo(row.dateStr);
         const rowData = [
@@ -1061,7 +1058,7 @@ export default function App() {
           exportMaKh,                                   // C: ma_kh
           "",                                           // D: ong_ba (Người nhận tiền)
           `nhập ngân hàng ngày ${dateInfo.dayMonth}`,   // E: dien_giai
-          new Date(dateInfo.iso),                                 // F: ngay_ct (Date object)
+          dateInfo.mdy,                                 // F: ngay_ct
           "",                                           // G: ma_qs
           row.voucherNo,                                // H: so_ct
           exportTkCo,                                   // I: Tk (Tk có)
@@ -1130,23 +1127,22 @@ export default function App() {
     XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
     const cleanName = fileData?.fileName.replace(/\.[^/.]+$/, "") || "Phan_Tich_So_Phu";
-    const suffix = exportFormatMode === "accounting" 
-      ? "hach_toan_bao_co" 
-      : exportFormatMode === "debit" 
-      ? "hach_toan_bao_no" 
-      : "da_xu_ly";
+    const suffix = exportFormatMode === "accounting"
+      ? "hach_toan_bao_co"
+      : exportFormatMode === "debit"
+        ? "hach_toan_bao_no"
+        : "da_xu_ly";
     const outFilename = `${cleanName}_${suffix}_${Date.now().toString().substring(8)}.xlsx`;
 
     XLSX.writeFile(workbook, outFilename);
 
     // Log export action to Google Sheets
     logUserActionOnSheets(
-      "Xuất file Excel", 
-      `Kế toán xuất thành công file báo cáo "${outFilename}" (${finalProcessedRows.length} dòng), định dạng mẫu: ${
-        exportFormatMode === "accounting" 
-          ? "Nhập liệu Báo Có" 
-          : exportFormatMode === "debit" 
-          ? "Nhập liệu Báo Nợ" 
+      "Xuất file Excel",
+      `Kế toán xuất thành công file báo cáo "${outFilename}" (${finalProcessedRows.length} dòng), định dạng mẫu: ${exportFormatMode === "accounting"
+        ? "Nhập liệu Báo Có"
+        : exportFormatMode === "debit"
+          ? "Nhập liệu Báo Nợ"
           : "Bảng phân tích đối chiếu"
       }`
     );
@@ -1154,7 +1150,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50 text-slate-900 font-sans tracking-tight flex flex-col selection:bg-indigo-100 selection:text-indigo-950">
-      
+
       {/* Header */}
       <header className="h-16 bg-white border-b border-gray-200 px-8 flex items-center justify-between shrink-0 select-none">
         <div className="flex items-center gap-3">
@@ -1172,8 +1168,8 @@ export default function App() {
               <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full text-ellipsis max-w-[240px] md:max-w-xs overflow-hidden whitespace-nowrap font-medium">
                 {fileData.fileName}
               </div>
-              <button 
-                onClick={handleClearExcel} 
+              <button
+                onClick={handleClearExcel}
                 className="text-sm font-medium text-indigo-600 hover:text-indigo-700 cursor-pointer transition"
               >
                 Thay đổi File
@@ -1188,35 +1184,31 @@ export default function App() {
       {/* Progress Steps as Tab Navigation */}
       <nav className="bg-white border-b border-gray-200 px-8 py-4 shrink-0 select-none">
         <div className="flex justify-center items-center max-w-xl mx-auto gap-12">
-          
-          <button 
+
+          <button
             onClick={() => setActiveTab("processor")}
             className="flex items-center gap-3 focus:outline-none cursor-pointer group text-left"
           >
-            <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold transition ${
-              activeTab === "processor" 
-                ? "bg-indigo-600 text-white" 
+            <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold transition ${activeTab === "processor"
+                ? "bg-indigo-600 text-white"
                 : "bg-gray-100 text-slate-500 group-hover:bg-slate-200"
-            }`}>1</span>
-            <span className={`text-sm font-medium transition ${
-              activeTab === "processor" ? "text-slate-900 font-semibold" : "text-gray-500 group-hover:text-slate-800"
-            }`}>Bàn Làm Việc</span>
+              }`}>1</span>
+            <span className={`text-sm font-medium transition ${activeTab === "processor" ? "text-slate-900 font-semibold" : "text-gray-500 group-hover:text-slate-800"
+              }`}>Bàn Làm Việc</span>
           </button>
 
           <div className="h-px w-12 bg-gray-200"></div>
 
-          <button 
+          <button
             onClick={() => setActiveTab("rules")}
             className="flex items-center gap-3 focus:outline-none cursor-pointer group text-left"
           >
-            <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold transition ${
-              activeTab === "rules" 
-                ? "bg-indigo-600 text-white" 
+            <span className={`w-6 h-6 rounded-full text-xs flex items-center justify-center font-bold transition ${activeTab === "rules"
+                ? "bg-indigo-600 text-white"
                 : "bg-gray-100 text-slate-500 group-hover:bg-slate-200"
-            }`}>2</span>
-            <span className={`text-sm font-medium transition ${
-              activeTab === "rules" ? "text-slate-900 font-semibold" : "text-gray-500 group-hover:text-slate-800"
-            }`}>Cấu Hình Từ Khóa</span>
+              }`}>2</span>
+            <span className={`text-sm font-medium transition ${activeTab === "rules" ? "text-slate-900 font-semibold" : "text-gray-500 group-hover:text-slate-800"
+              }`}>Cấu Hình Từ Khóa</span>
           </button>
 
         </div>
@@ -1224,7 +1216,7 @@ export default function App() {
 
       {/* Main Content Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+
         {/* Dynamic Navigation Content Switch */}
         {activeTab === "googleSheets" && (
           <GoogleSheetsSettings
@@ -1259,7 +1251,7 @@ export default function App() {
 
         {activeTab === "processor" && (
           <div className="space-y-6">
-            
+
             {/* FILE DROPAREA / FILE DETAILS HEADER */}
             {!fileData ? (
               <div
@@ -1267,11 +1259,10 @@ export default function App() {
                 onDragOver={handleDrag}
                 onDragLeave={handleDrag}
                 onDrop={handleDrop}
-                className={`border-2 border-dashed rounded-2xl p-10 text-center transition cursor-pointer flex flex-col items-center justify-center min-h-[340px] ${
-                  dragActive
+                className={`border-2 border-dashed rounded-2xl p-10 text-center transition cursor-pointer flex flex-col items-center justify-center min-h-[340px] ${dragActive
                     ? "border-indigo-600 bg-indigo-50/40"
                     : "border-gray-200 bg-white hover:border-indigo-400 hover:bg-gray-50/50"
-                }`}
+                  }`}
                 onClick={() => fileInputRef.current?.click()}
                 id="excel-drop-zone"
               >
@@ -1282,7 +1273,7 @@ export default function App() {
                 <p className="text-gray-500 text-sm max-w-md mx-auto mt-2 leading-relaxed">
                   Kéo và thả file Excel <strong>.xlsx, .xls, .csv</strong> vào đây, hoặc click để duyệt từ máy tính của bạn.
                 </p>
-                
+
                 <input
                   type="file"
                   ref={fileInputRef}
@@ -1313,7 +1304,7 @@ export default function App() {
             ) : (
               // ACTIVE FILE COMPONENT VIEW
               <div className="space-y-6" id="dashboard-active-panel">
-                
+
                 {/* Active file status card bar */}
                 <div className="bg-white rounded-xl px-6 py-5 text-slate-900 shadow-sm border border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -1333,16 +1324,15 @@ export default function App() {
                   <div className="flex items-center gap-2 select-none">
                     <button
                       onClick={() => setShowConfigPanel(!showConfigPanel)}
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-semibold cursor-pointer transition ${
-                        showConfigPanel
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-lg border text-xs font-semibold cursor-pointer transition ${showConfigPanel
                           ? "bg-slate-900 border-slate-900 text-white hover:bg-slate-800"
                           : "bg-white text-slate-700 border-gray-300 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5" />
                       {showConfigPanel ? "Thu gọn Cài đặt" : "Cấu hình cột tiêu đề"}
                     </button>
-                    
+
                     <button
                       onClick={handleClearExcel}
                       className="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg text-rose-600 text-xs font-semibold cursor-pointer transition flex items-center gap-1.5"
@@ -1356,7 +1346,7 @@ export default function App() {
                 {/* TWO-COLUMN GRID: CONFIGURATION CONTROLS */}
                 {showConfigPanel && (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in" id="config-settings-panel">
-                    
+
                     {/* Panel 1: Map header rows & bind index columns */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm space-y-4">
                       <div>
@@ -1368,7 +1358,7 @@ export default function App() {
                       </div>
 
                       <div className="space-y-4">
-                        
+
                         {/* Header Row Index selector */}
                         <div>
                           <label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
@@ -1572,7 +1562,7 @@ export default function App() {
                                 </span>
                               </div>
                             </label>
-                            
+
                             <label className="flex items-start gap-2.5 text-xs text-slate-750 cursor-pointer">
                               <input
                                 type="radio"
@@ -1593,7 +1583,7 @@ export default function App() {
                                 </div>
                                 <span className="text-[10px] font-normal text-gray-500 mt-0.5 leading-normal block">
                                   Ví dụ: <code className="text-indigo-600 font-bold bg-indigo-50/70 px-1 py-0.5 rounded text-xs font-mono">
-                                    {voucherIncrementType === "prefix" 
+                                    {voucherIncrementType === "prefix"
                                       ? `${voucherPrefix}${voucherStartNumStr}${voucherSuffix ? `/${voucherSuffix}` : ""}`
                                       : `${voucherPrefix ? `${voucherPrefix}-` : ""}${voucherSuffix}${voucherStartNumStr}`}
                                   </code>
@@ -1666,9 +1656,9 @@ export default function App() {
                               placeholder="Mặc định: KH000134"
                               value={exportMaKh}
                               onChange={(e) => {
-                                  const val = e.target.value.trim();
-                                  setExportMaKh(val);
-                                  localStorage.setItem("exportMaKh", val);
+                                const val = e.target.value.trim();
+                                setExportMaKh(val);
+                                localStorage.setItem("exportMaKh", val);
                               }}
                               className="w-full text-xs bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-100 text-slate-800 font-medium tracking-wide font-mono"
                             />
@@ -1725,37 +1715,34 @@ export default function App() {
                         {/* Format selector */}
                         <div>
                           <label className="block text-[10px] font-bold text-indigo-900/85 uppercase mb-1">Mẫu excel xuất</label>
-                           <div className="grid grid-cols-3 gap-1.5 bg-indigo-100/30 p-1 rounded-lg border border-indigo-100/50">
+                          <div className="grid grid-cols-3 gap-1.5 bg-indigo-100/30 p-1 rounded-lg border border-indigo-100/50">
                             <button
                               type="button"
                               onClick={() => setExportFormatMode("accounting")}
-                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${
-                                exportFormatMode === "accounting"
+                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${exportFormatMode === "accounting"
                                   ? "bg-white text-indigo-750 shadow-sm"
                                   : "text-indigo-900/60 hover:text-indigo-900"
-                              }`}
+                                }`}
                             >
                               Mẫu báo có
                             </button>
                             <button
                               type="button"
                               onClick={() => setExportFormatMode("debit")}
-                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${
-                                exportFormatMode === "debit"
+                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${exportFormatMode === "debit"
                                   ? "bg-white text-indigo-750 shadow-sm"
                                   : "text-indigo-900/60 hover:text-indigo-900"
-                              }`}
+                                }`}
                             >
                               Mẫu báo nợ
                             </button>
                             <button
                               type="button"
                               onClick={() => setExportFormatMode("raw")}
-                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${
-                                exportFormatMode === "raw"
+                              className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${exportFormatMode === "raw"
                                   ? "bg-white text-indigo-750 shadow-sm"
                                   : "text-indigo-900/60 hover:text-indigo-900"
-                              }`}
+                                }`}
                             >
                               Bảng Phân Tích
                             </button>
@@ -1785,8 +1772,8 @@ export default function App() {
                         {exportFormatMode === "accounting"
                           ? "XUẤT EXCEL BÁO CÓ"
                           : exportFormatMode === "debit"
-                          ? "XUẤT EXCEL BÁO NỢ"
-                          : "XUẤT BẢNG PHÂN TÍCH"}
+                            ? "XUẤT EXCEL BÁO NỢ"
+                            : "XUẤT BẢNG PHÂN TÍCH"}
                       </button>
                     </div>
 
@@ -1800,59 +1787,54 @@ export default function App() {
                       <Filter className="w-3.5 h-3.5 text-indigo-500" />
                       Lọc xem nhanh:
                     </span>
-                    
+
                     <div className="flex flex-wrap items-center gap-1.5 bg-gray-50 p-1 rounded-lg border border-gray-200">
                       <button
                         onClick={() => setPreviewFilterMatch("all")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${
-                          previewFilterMatch === "all"
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${previewFilterMatch === "all"
                             ? "bg-white text-slate-800 shadow-sm font-bold border border-gray-200/85"
                             : "text-slate-600 hover:text-indigo-600 font-medium"
-                        }`}
+                          }`}
                       >
                         Tất cả ({finalProcessedRows.length})
                       </button>
-                      
+
                       <button
                         onClick={() => setPreviewFilterMatch("matched")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${
-                          previewFilterMatch === "matched"
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${previewFilterMatch === "matched"
                             ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-200 font-bold"
                             : "text-slate-600 hover:text-emerald-600 font-medium"
-                        }`}
+                          }`}
                       >
                         Khớp tự động ({finalProcessedRows.filter(r => r.matchedKeyword !== null && !r.isOverridden).length})
                       </button>
 
                       <button
                         onClick={() => setPreviewFilterMatch("overridden")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${
-                          previewFilterMatch === "overridden"
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${previewFilterMatch === "overridden"
                             ? "bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-200 font-bold"
                             : "text-slate-600 hover:text-indigo-600 font-medium"
-                        }`}
+                          }`}
                       >
                         ✍️ Đã sửa thủ công ({finalProcessedRows.filter(r => r.isOverridden).length})
                       </button>
 
                       <button
                         onClick={() => setPreviewFilterMatch("unmatched")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${
-                          previewFilterMatch === "unmatched"
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${previewFilterMatch === "unmatched"
                             ? "bg-rose-50 text-rose-700 shadow-sm border border-rose-200 font-bold"
                             : "text-slate-600 hover:text-rose-605 font-medium"
-                        }`}
+                          }`}
                       >
                         ⚠️ Chưa đối chiếu ({finalProcessedRows.filter(r => r.matchedKeyword === null && !r.isOverridden).length})
                       </button>
 
                       <button
                         onClick={() => setPreviewFilterMatch("low_confidence")}
-                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${
-                          previewFilterMatch === "low_confidence"
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold cursor-pointer transition-all duration-150 ${previewFilterMatch === "low_confidence"
                             ? "bg-amber-50 text-amber-700 shadow-sm border border-amber-200 font-bold"
                             : "text-slate-600 hover:text-amber-650 font-medium"
-                        }`}
+                          }`}
                         title="Dòng có tỷ lệ chính xác hoặc độ tự tin dưới 90% (do trùng từ khóa hoặc không có ranh giới từ sạch)"
                       >
                         ⚠️ Tự tin thấp ({finalProcessedRows.filter(r => r.matchedKeyword !== null && !r.isOverridden && ((r.accuracyRate || 0) < 90 || (r.confidenceRate || 0) < 90)).length})
@@ -1887,21 +1869,19 @@ export default function App() {
                         </span>
                         <button
                           onClick={() => setAssignDropdownMode("code")}
-                          className={`px-2.5 py-1 rounded-md cursor-pointer text-[11px] font-semibold transition-all ${
-                            assignDropdownMode === "code"
+                          className={`px-2.5 py-1 rounded-md cursor-pointer text-[11px] font-semibold transition-all ${assignDropdownMode === "code"
                               ? "bg-white text-indigo-700 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-indigo-100 font-bold"
                               : "hover:text-slate-900 text-slate-500"
-                          }`}
+                            }`}
                         >
                           Mã Khách Hàng
                         </button>
                         <button
                           onClick={() => setAssignDropdownMode("keyword")}
-                          className={`px-2.5 py-1 rounded-md cursor-pointer text-[11px] font-semibold transition-all ${
-                            assignDropdownMode === "keyword"
+                          className={`px-2.5 py-1 rounded-md cursor-pointer text-[11px] font-semibold transition-all ${assignDropdownMode === "keyword"
                               ? "bg-white text-emerald-700 shadow-[0_1px_2px_rgba(0,0,0,0.05)] border border-emerald-100 font-bold"
                               : "hover:text-slate-900 text-slate-500"
-                          }`}
+                            }`}
                         >
                           Từ khóa (Keywords)
                         </button>
@@ -1933,9 +1913,9 @@ export default function App() {
                         <tr className="bg-slate-100/70 border-b border-slate-200 shadow-inner">
                           <td className="p-2 text-center relative">
                             {activeExcelFilterCol && (
-                              <div 
-                                className="fixed inset-0 z-40 bg-transparent cursor-default" 
-                                onClick={() => setActiveExcelFilterCol(null)} 
+                              <div
+                                className="fixed inset-0 z-40 bg-transparent cursor-default"
+                                onClick={() => setActiveExcelFilterCol(null)}
                               />
                             )}
                             {Object.values(colFilters).some(v => v !== "" && v !== "all") || Object.keys(excelFilters).some(k => (excelFilters[k] || []).length > 0) ? (
@@ -1987,11 +1967,10 @@ export default function App() {
                               />
                               <button
                                 onClick={(e) => openExcelFilterDropdown("date", e)}
-                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${
-                                  excelFilters.date.length > 0 
-                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${excelFilters.date.length > 0
+                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                     : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                                }`}
+                                  }`}
                                 title="Bộ lọc giá trị Excel"
                               >
                                 <Filter className="w-3 h-3" />
@@ -2009,11 +1988,10 @@ export default function App() {
                               />
                               <button
                                 onClick={(e) => openExcelFilterDropdown("voucherNo", e)}
-                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${
-                                  excelFilters.voucherNo.length > 0 
-                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${excelFilters.voucherNo.length > 0
+                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                     : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                                }`}
+                                  }`}
                                 title="Bộ lọc giá trị Excel"
                               >
                                 <Filter className="w-3 h-3" />
@@ -2031,11 +2009,10 @@ export default function App() {
                               />
                               <button
                                 onClick={(e) => openExcelFilterDropdown("customerCodeOrKw", e)}
-                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${
-                                  excelFilters.customerCodeOrKw.length > 0 
-                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${excelFilters.customerCodeOrKw.length > 0
+                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                     : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                                }`}
+                                  }`}
                                 title="Bộ lọc giá trị Excel"
                               >
                                 <Filter className="w-3 h-3" />
@@ -2053,11 +2030,10 @@ export default function App() {
                               />
                               <button
                                 onClick={(e) => openExcelFilterDropdown("customerName", e)}
-                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${
-                                  excelFilters.customerName.length > 0 
-                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${excelFilters.customerName.length > 0
+                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                     : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                                }`}
+                                  }`}
                                 title="Bộ lọc giá trị Excel"
                               >
                                 <Filter className="w-3 h-3" />
@@ -2075,11 +2051,10 @@ export default function App() {
                               />
                               <button
                                 onClick={(e) => openExcelFilterDropdown("description", e)}
-                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${
-                                  excelFilters.description.length > 0 
-                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                                className={`p-1 rounded border cursor-pointer transition shrink-0 ${excelFilters.description.length > 0
+                                    ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                     : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                                }`}
+                                  }`}
                                 title="Bộ lọc giá trị Excel"
                               >
                                 <Filter className="w-3 h-3" />
@@ -2110,11 +2085,10 @@ export default function App() {
                           <td className="p-1 px-1 relative text-center">
                             <button
                               onClick={(e) => openExcelFilterDropdown("accuracyRate", e)}
-                              className={`p-1 rounded border cursor-pointer transition ${
-                                excelFilters.accuracyRate.length > 0 
-                                  ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                              className={`p-1 rounded border cursor-pointer transition ${excelFilters.accuracyRate.length > 0
+                                  ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                   : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                              }`}
+                                }`}
                               title="Bộ lọc giá trị Excel"
                             >
                               <Filter className="w-3 h-3 mx-auto" />
@@ -2123,11 +2097,10 @@ export default function App() {
                           <td className="p-1 px-1 relative text-center">
                             <button
                               onClick={(e) => openExcelFilterDropdown("confidenceRate", e)}
-                              className={`p-1 rounded border cursor-pointer transition ${
-                                excelFilters.confidenceRate.length > 0 
-                                  ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                              className={`p-1 rounded border cursor-pointer transition ${excelFilters.confidenceRate.length > 0
+                                  ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                   : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                              }`}
+                                }`}
                               title="Bộ lọc giá trị Excel"
                             >
                               <Filter className="w-3 h-3 mx-auto" />
@@ -2136,11 +2109,10 @@ export default function App() {
                           <td className="p-1 px-1.5 relative text-center">
                             <button
                               onClick={(e) => openExcelFilterDropdown("matchType", e)}
-                              className={`p-1 rounded border cursor-pointer transition ${
-                                excelFilters.matchType.length > 0 
-                                  ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100" 
+                              className={`p-1 rounded border cursor-pointer transition ${excelFilters.matchType.length > 0
+                                  ? "bg-indigo-50 border-indigo-300 text-indigo-600 hover:bg-indigo-100"
                                   : "bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-150"
-                              }`}
+                                }`}
                               title="Bộ lọc giá trị Excel"
                             >
                               <Filter className="w-3 h-3 mx-auto" />
@@ -2160,13 +2132,12 @@ export default function App() {
                           previewDataFiltered.map((row) => (
                             <tr
                               key={row.originalIndex}
-                              className={`border-b border-slate-100 transition duration-150 ${
-                                row.isOverridden
+                              className={`border-b border-slate-100 transition duration-150 ${row.isOverridden
                                   ? "bg-indigo-50/15 hover:bg-indigo-50/25"
                                   : row.matchedKeyword === null
-                                  ? "hover:bg-amber-50/30 bg-amber-50/5"
-                                  : "hover:bg-sky-50/20"
-                              }`}
+                                    ? "hover:bg-amber-50/30 bg-amber-50/5"
+                                    : "hover:bg-sky-50/20"
+                                }`}
                             >
                               {/* STT */}
                               <td className="p-3 font-mono text-center font-medium relative">
@@ -2217,12 +2188,12 @@ export default function App() {
                                         <span className="truncate">{row.customerCode}</span>
                                         <ChevronDown className="w-3 h-3 text-indigo-400 shrink-0" />
                                       </button>
-                                      
+
                                       {activeDropdown?.rowIndex === row.originalIndex && activeDropdown?.type === "code" && (
                                         <>
                                           {/* Backdrop to close list */}
                                           <div className="fixed inset-0 z-40 cursor-default" onClick={() => setActiveDropdown(null)} />
-                                          
+
                                           {/* Custom Popover */}
                                           <div className="absolute left-0 mt-1 w-[260px] bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-2 text-xs flex flex-col gap-2 animate-in fade-in duration-100">
                                             {/* Quick Search Box */}
@@ -2237,7 +2208,7 @@ export default function App() {
                                                 className="w-full bg-slate-50 text-slate-800 font-medium pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-300 placeholder:text-slate-400 text-[11px]"
                                               />
                                               {dropdownSearch && (
-                                                <button 
+                                                <button
                                                   onClick={() => setDropdownSearch("")}
                                                   className="absolute right-2 text-slate-400 hover:text-slate-600 text-[10px] font-bold"
                                                 >
@@ -2245,7 +2216,7 @@ export default function App() {
                                                 </button>
                                               )}
                                             </div>
-                                            
+
                                             {/* Results Scroll List */}
                                             <div className="max-h-[220px] overflow-y-auto flex flex-col gap-0.5 pr-1 text-slate-700">
                                               {/* Current Selected Header */}
@@ -2262,12 +2233,12 @@ export default function App() {
                                                 <span>{row.customerCode}</span>
                                                 <span className="text-[10px] text-slate-400 font-sans font-normal truncate">{row.customerName}</span>
                                               </button>
-                                              
+
                                               {/* Matching Options */}
                                               <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 py-1 mt-1 border-t border-slate-100 pt-1">
                                                 Danh sách mã khả dụng
                                               </div>
-                                              
+
                                               {/* Vang lai */}
                                               {("KH-VANGLAI".toLowerCase().includes(dropdownSearch.toLowerCase()) || "vãng lai".includes(dropdownSearch.toLowerCase())) && (
                                                 <button
@@ -2281,20 +2252,20 @@ export default function App() {
                                                   <span className="text-[9px] text-slate-400 font-sans">Khách hàng vãng lai</span>
                                                 </button>
                                               )}
-                                              
+
                                               {/* Filter rules */}
                                               {(() => {
                                                 const searchLower = dropdownSearch.toLowerCase();
-                                                const matches = rules.filter(rule => 
+                                                const matches = rules.filter(rule =>
                                                   rule.customerCode.toLowerCase().includes(searchLower) ||
                                                   rule.customerName.toLowerCase().includes(searchLower) ||
                                                   (rule.keywords && rule.keywords.some(kw => kw.toLowerCase().includes(searchLower)))
                                                 );
-                                                
+
                                                 if (matches.length === 0 && !("KH-VANGLAI".toLowerCase().includes(dropdownSearch.toLowerCase()) || "vãng lai".includes(dropdownSearch.toLowerCase()))) {
                                                   return <div className="text-center text-slate-400 py-4 text-[11px]">Không tìm thấy mã nào phù hợp</div>;
                                                 }
-                                                
+
                                                 return matches.map(rule => (
                                                   <button
                                                     key={rule.id}
@@ -2302,11 +2273,10 @@ export default function App() {
                                                       handleManualAssign(row.originalIndex, rule.customerCode, rule.customerName);
                                                       setActiveDropdown(null);
                                                     }}
-                                                    className={`w-full text-left px-2 py-1.5 rounded-lg hover:bg-sky-50 transition border border-transparent font-mono text-[10px] flex flex-col ${
-                                                      row.customerCode === rule.customerCode 
-                                                        ? "bg-sky-50 text-indigo-900 font-bold border-sky-100" 
+                                                    className={`w-full text-left px-2 py-1.5 rounded-lg hover:bg-sky-50 transition border border-transparent font-mono text-[10px] flex flex-col ${row.customerCode === rule.customerCode
+                                                        ? "bg-sky-50 text-indigo-900 font-bold border-sky-100"
                                                         : ""
-                                                    }`}
+                                                      }`}
                                                   >
                                                     <span className="text-slate-800 font-bold">{rule.customerCode}</span>
                                                     <span className="text-[9px] text-slate-400 font-sans font-medium truncate">{rule.customerName}</span>
@@ -2321,7 +2291,7 @@ export default function App() {
                                   ) : (
                                     (() => {
                                       const descLower = row.description.toLowerCase();
-                                      
+
                                       // Get parentRule / currently selected keyword
                                       const parentRule = rules.find(r => r.customerCode === row.customerCode);
                                       const currentKw = (() => {
@@ -2335,11 +2305,11 @@ export default function App() {
                                       // List keywords containing in row.description (suggestions)
                                       // ALWAYS compute based on row.description so that even after manual override,
                                       // we can still detect matching terms in row.description and show them as "✨ Gợi ý"!
-                                      const detectedKws = allKeywordsList.filter(item => 
+                                      const detectedKws = allKeywordsList.filter(item =>
                                         descLower.includes(item.keyword.toLowerCase())
                                       );
-                                      
-                                      const remainingKws = allKeywordsList.filter(item => 
+
+                                      const remainingKws = allKeywordsList.filter(item =>
                                         !descLower.includes(item.keyword.toLowerCase())
                                       );
 
@@ -2360,7 +2330,7 @@ export default function App() {
                                             <>
                                               {/* Backdrop to close list */}
                                               <div className="fixed inset-0 z-40 cursor-default" onClick={() => setActiveDropdown(null)} />
-                                              
+
                                               {/* Custom Popover */}
                                               <div className="absolute left-0 mt-1 w-[280px] bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-2 text-xs flex flex-col gap-2 animate-in fade-in duration-100">
                                                 {/* Search Box */}
@@ -2375,7 +2345,7 @@ export default function App() {
                                                     className="w-full bg-slate-50 text-slate-800 font-medium pl-8 pr-2.5 py-1.5 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-300 placeholder:text-slate-400 text-[11px]"
                                                   />
                                                   {dropdownSearch && (
-                                                    <button 
+                                                    <button
                                                       onClick={() => setDropdownSearch("")}
                                                       className="absolute right-2 text-slate-400 hover:text-slate-600 text-[10px] font-bold"
                                                     >
@@ -2407,7 +2377,7 @@ export default function App() {
                                                   {/* GỢI Ý - SUGGESTIONS SEARCH OR NATURALLY PRESENT */}
                                                   {(() => {
                                                     const searchLower = dropdownSearch.toLowerCase();
-                                                    const filteredSuggests = detectedKws.filter(item => 
+                                                    const filteredSuggests = detectedKws.filter(item =>
                                                       item.keyword.toLowerCase().includes(searchLower) ||
                                                       item.rule.customerCode.toLowerCase().includes(searchLower) ||
                                                       item.rule.customerName.toLowerCase().includes(searchLower)
@@ -2465,7 +2435,7 @@ export default function App() {
 
                                                   {(() => {
                                                     const searchLower = dropdownSearch.toLowerCase();
-                                                    const matches = remainingKws.filter(item => 
+                                                    const matches = remainingKws.filter(item =>
                                                       item.keyword.toLowerCase().includes(searchLower) ||
                                                       item.rule.customerCode.toLowerCase().includes(searchLower) ||
                                                       item.rule.customerName.toLowerCase().includes(searchLower)
@@ -2482,9 +2452,8 @@ export default function App() {
                                                           handleManualAssign(row.originalIndex, item.rule.customerCode, item.rule.customerName, item.keyword);
                                                           setActiveDropdown(null);
                                                         }}
-                                                        className={`w-full text-left px-2 py-1 rounded-lg hover:bg-slate-50 border border-transparent transition font-mono text-[10px] flex items-center justify-between ${
-                                                          currentKw === item.keyword ? "bg-slate-100 text-slate-900 font-bold" : "text-slate-600"
-                                                        }`}
+                                                        className={`w-full text-left px-2 py-1 rounded-lg hover:bg-slate-50 border border-transparent transition font-mono text-[10px] flex items-center justify-between ${currentKw === item.keyword ? "bg-slate-100 text-slate-900 font-bold" : "text-slate-600"
+                                                          }`}
                                                       >
                                                         <span className="truncate">{item.keyword}</span>
                                                         <span className="text-[8px] bg-slate-100 text-slate-500 px-1 rounded truncate shrink-0 ml-1">
@@ -2558,11 +2527,10 @@ export default function App() {
                                 {row.isOverridden ? (
                                   <span className="text-indigo-650 font-mono font-extrabold bg-indigo-50 px-1 py-0.5 rounded border border-indigo-100">100%</span>
                                 ) : row.matchedKeyword !== null ? (
-                                  <span className={`font-mono font-bold ${
-                                    (row.accuracyRate || 0) >= 90
+                                  <span className={`font-mono font-bold ${(row.accuracyRate || 0) >= 90
                                       ? "text-emerald-600"
                                       : "text-amber-600"
-                                  }`}>
+                                    }`}>
                                     {row.accuracyRate}%
                                   </span>
                                 ) : (
@@ -2586,11 +2554,10 @@ export default function App() {
                                       return 80;
                                     })();
                                     return (
-                                      <span className={`font-mono font-bold ${
-                                        rate >= 90
+                                      <span className={`font-mono font-bold ${rate >= 90
                                           ? "text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100"
                                           : "text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100"
-                                      }`}>
+                                        }`}>
                                         {rate}%
                                       </span>
                                     );
@@ -2644,9 +2611,9 @@ export default function App() {
 
       {activeExcelFilterCol && (
         <>
-          <div 
-            className="fixed inset-0 z-40 bg-transparent cursor-default" 
-            onClick={() => setActiveExcelFilterCol(null)} 
+          <div
+            className="fixed inset-0 z-40 bg-transparent cursor-default"
+            onClick={() => setActiveExcelFilterCol(null)}
           />
           {renderExcelFilterDropdown(activeExcelFilterCol)}
         </>
