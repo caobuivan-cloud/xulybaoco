@@ -35,6 +35,7 @@ import {
   indexToColumnLetter,
   processBankStatement
 } from "./utils/excelProcessor";
+import { exportRowsWithTemplate } from "./utils/templateExcelExport";
 import { RulesEditor } from "./components/RulesEditor";
 import { DashboardCharts } from "./components/DashboardCharts";
 import { InstructionGuide } from "./components/InstructionGuide";
@@ -47,6 +48,10 @@ import {
   writeActionLogToSheet,
   getPortalUserEmail
 } from "./utils/googleSheetsSync";
+
+const DEFAULT_TEMPLATE_SHEET = "Mã gd 3";
+const ACCOUNTING_TEMPLATE_SHEETS = ["Mã gd 2", "Mã gd 1", "Mã gd 3", "Mã gd 9", "Sheet2", "Ghi chú"];
+const DEBIT_TEMPLATE_SHEETS = ["Mã gd 2", "Mã gd 1", "Mã gd 3", "Mã gd 8", "Mã gd 9", "Sheet2", "Ghi chú"];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<"processor" | "rules" | "googleSheets" | "analytics" | "guide">("processor");
@@ -104,6 +109,7 @@ export default function App() {
   const [exportTkNo, setExportTkNo] = useState(() => localStorage.getItem("exportTkNo") || "11215");
   const [exportTkCo, setExportTkCo] = useState(() => localStorage.getItem("exportTkCo") || "1311");
   const [exportFormatMode, setExportFormatMode] = useState<"accounting" | "debit" | "raw">("accounting");
+  const [exportTemplateSheet, setExportTemplateSheet] = useState(() => localStorage.getItem("exportTemplateSheet") || DEFAULT_TEMPLATE_SHEET);
 
   // Manual overrides mapping index -> customer override
   const [manualOverrides, setManualOverrides] = useState<{ [index: number]: { code: string; name: string; keyword?: string } }>({});
@@ -278,6 +284,52 @@ export default function App() {
     }
   };
 
+  const detectSheetSettings = (raw: any[][]): ColumnSettings => {
+    let detectedHeaderRow = 0;
+    let detectedDateCol = "A";
+    let detectedDescCol = "C";
+    let detectedAmountCol = "D";
+
+    for (let rIndex = 0; rIndex < Math.min(12, raw.length); rIndex++) {
+      const row = raw[rIndex];
+      if (!row || !Array.isArray(row)) continue;
+
+      let hasDateKeyword = false;
+      let hasDescKeyword = false;
+      let hasAmountKeyword = false;
+
+      row.forEach((cellVal, colIdx) => {
+        const valStr = String(cellVal).toLowerCase();
+        const colLetter = indexToColumnLetter(colIdx);
+
+        if (valStr.includes("ngày") || valStr.includes("date") || valStr.includes("ngay gd")) {
+          detectedDateCol = colLetter;
+          hasDateKeyword = true;
+        }
+        if (valStr.includes("diễn giải") || valStr.includes("nội dung") || valStr.includes("mô tả") || valStr.includes("description") || valStr.includes("chi tiết")) {
+          detectedDescCol = colLetter;
+          hasDescKeyword = true;
+        }
+        if (valStr.includes("số tiền") || valStr.includes("phát sinh") || valStr.includes("sô tiên") || valStr.includes("amount") || valStr.includes("tiền")) {
+          detectedAmountCol = colLetter;
+          hasAmountKeyword = true;
+        }
+      });
+
+      if (hasDateKeyword || hasDescKeyword || hasAmountKeyword) {
+        detectedHeaderRow = rIndex;
+        break;
+      }
+    }
+
+    return {
+      headerRow: detectedHeaderRow,
+      dateCol: detectedDateCol,
+      descCol: detectedDescCol,
+      amountCol: detectedAmountCol,
+    };
+  };
+
   // Parse Excel
   const processFile = (file: File) => {
     const reader = new FileReader();
@@ -287,9 +339,14 @@ export default function App() {
         const workbook = XLSX.read(data, { type: "array" });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
+        const rawSheets = workbook.SheetNames.reduce<Record<string, any[][]>>((acc, currentSheetName) => {
+          const currentWorksheet = workbook.Sheets[currentSheetName];
+          acc[currentSheetName] = XLSX.utils.sheet_to_json<any[][]>(currentWorksheet, { header: 1, defval: "" }) as unknown as any[][];
+          return acc;
+        }, {});
 
         // Use header: 1 to parse as 2D array, defval: "" to prevent missing indices
-        const raw = XLSX.utils.sheet_to_json<any[][]>(worksheet, { header: 1, defval: "" });
+        const raw = rawSheets[sheetName] || XLSX.utils.sheet_to_json<any[][]>(worksheet, { header: 1, defval: "" });
 
         // Auto-detect header row and columns:
         // Scan first 10 rows for common bank headers
@@ -331,12 +388,7 @@ export default function App() {
           }
         }
 
-        const initialSettings: ColumnSettings = {
-          headerRow: detectedHeaderRow,
-          dateCol: detectedDateCol,
-          descCol: detectedDescCol,
-          amountCol: detectedAmountCol
-        };
+        const initialSettings = detectSheetSettings(raw as unknown as any[][]);
 
         setColumnSettings(initialSettings);
         setManualOverrides({}); // clear overrides
@@ -346,8 +398,9 @@ export default function App() {
           sheetNames: workbook.SheetNames,
           selectedSheet: sheetName,
           rawRows: raw as unknown as any[][],
-          headers: (raw[detectedHeaderRow] || []).map((h, i) => String(h || `Cột ${indexToColumnLetter(i)}`)),
-          headerRowIndex: detectedHeaderRow
+          rawSheets,
+          headers: (raw[initialSettings.headerRow] || []).map((h, i) => String(h || `Cột ${indexToColumnLetter(i)}`)),
+          headerRowIndex: initialSettings.headerRow
         };
 
         setFileData(fDetails);
@@ -366,12 +419,23 @@ export default function App() {
 
   // When sheet changes
   const handleSheetChange = (sheetName: string) => {
-    // Reload that sheet
     if (!fileData) return;
     try {
-      // Find sheet in original workbook? Since we read array from FileReader, we can prompt the user to re-upload.
-      // But actually, we support single sheet perfectly. Let's update active sheet.
+      const raw = fileData.rawSheets[sheetName];
+      if (!raw) return;
+      const updatedSettings = detectSheetSettings(raw);
+      const updatedDetails: FileData = {
+        ...fileData,
+        selectedSheet: sheetName,
+        rawRows: raw,
+        headers: (raw[updatedSettings.headerRow] || []).map((h, i) => String(h || `Cột ${indexToColumnLetter(i)}`)),
+        headerRowIndex: updatedSettings.headerRow
+      };
       setActiveSheet(sheetName);
+      setColumnSettings(updatedSettings);
+      setFileData(updatedDetails);
+      setManualOverrides({});
+      triggerProcess(raw, updatedSettings, rules);
     } catch (err) {
       console.error(err);
     }
@@ -937,8 +1001,37 @@ export default function App() {
   };
 
   // Finally export the filtered, aligned entries back to clean Excel!
-  const handleExportFinished = () => {
+  const handleExportFinished = async () => {
     if (finalProcessedRows.length === 0) return;
+
+    if (exportFormatMode === "accounting" || exportFormatMode === "debit") {
+      const cleanName = fileData?.fileName.replace(/\.[^/.]+$/, "") || "Phan_Tich_So_Phu";
+      const suffix = exportFormatMode === "accounting" ? "hach_toan_bao_co" : "hach_toan_bao_no";
+      const outFilename = `${cleanName}_${suffix}_${Date.now().toString().substring(8)}.xlsx`;
+
+      try {
+        await exportRowsWithTemplate({
+          rows: finalProcessedRows,
+          mode: exportFormatMode,
+          sheetName: exportTemplateSheet || DEFAULT_TEMPLATE_SHEET,
+          outputFileName: outFilename,
+          exportMaDvcs,
+          exportMaGd,
+          exportMaKh,
+          exportTkNo,
+          exportTkCo,
+        });
+
+        logUserActionOnSheets(
+          "Xuất file Excel",
+          `Kế toán xuất thành công file báo cáo "${outFilename}" (${finalProcessedRows.length} dòng), định dạng mẫu: ${exportFormatMode === "accounting" ? "Nhập liệu Báo Có" : "Nhập liệu Báo Nợ"}, sheet: ${exportTemplateSheet}`
+        );
+      } catch (err) {
+        console.error("Lỗi xuất Excel theo mẫu:", err);
+        alert(err instanceof Error ? err.message : "Xuất Excel theo mẫu thất bại.");
+      }
+      return;
+    }
 
     let worksheet;
     let sheetName = "Sổ Phụ Đã Phân Loại";
@@ -1320,6 +1413,20 @@ export default function App() {
                       </p>
                     </div>
                   </div>
+
+                  {fileData.sheetNames.length > 1 && (
+                    <select
+                      value={activeSheet}
+                      onChange={(e) => handleSheetChange(e.target.value)}
+                      className="text-xs bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-100 font-medium text-slate-800"
+                    >
+                      {fileData.sheetNames.map((sheetName) => (
+                        <option key={sheetName} value={sheetName}>
+                          {sheetName}
+                        </option>
+                      ))}
+                    </select>
+                  )}
 
                   <div className="flex items-center gap-2 select-none">
                     <button
@@ -1718,7 +1825,13 @@ export default function App() {
                           <div className="grid grid-cols-3 gap-1.5 bg-indigo-100/30 p-1 rounded-lg border border-indigo-100/50">
                             <button
                               type="button"
-                              onClick={() => setExportFormatMode("accounting")}
+                              onClick={() => {
+                                setExportFormatMode("accounting");
+                                if (!ACCOUNTING_TEMPLATE_SHEETS.includes(exportTemplateSheet)) {
+                                  setExportTemplateSheet(DEFAULT_TEMPLATE_SHEET);
+                                  localStorage.setItem("exportTemplateSheet", DEFAULT_TEMPLATE_SHEET);
+                                }
+                              }}
                               className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${exportFormatMode === "accounting"
                                   ? "bg-white text-indigo-750 shadow-sm"
                                   : "text-indigo-900/60 hover:text-indigo-900"
@@ -1728,7 +1841,13 @@ export default function App() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setExportFormatMode("debit")}
+                              onClick={() => {
+                                setExportFormatMode("debit");
+                                if (!DEBIT_TEMPLATE_SHEETS.includes(exportTemplateSheet)) {
+                                  setExportTemplateSheet(DEFAULT_TEMPLATE_SHEET);
+                                  localStorage.setItem("exportTemplateSheet", DEFAULT_TEMPLATE_SHEET);
+                                }
+                              }}
                               className={`px-2 py-1.5 text-[10px] sm:text-[11px] rounded font-bold cursor-pointer transition-all ${exportFormatMode === "debit"
                                   ? "bg-white text-indigo-750 shadow-sm"
                                   : "text-indigo-900/60 hover:text-indigo-900"
@@ -1748,6 +1867,26 @@ export default function App() {
                             </button>
                           </div>
                         </div>
+
+                        {exportFormatMode !== "raw" && (
+                          <div>
+                            <label className="block text-[10px] font-bold text-indigo-900/85 uppercase mb-1">Sheet xuất dữ liệu</label>
+                            <select
+                              value={exportTemplateSheet}
+                              onChange={(e) => {
+                                setExportTemplateSheet(e.target.value);
+                                localStorage.setItem("exportTemplateSheet", e.target.value);
+                              }}
+                              className="w-full text-xs bg-white border border-indigo-100 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-100 font-medium text-slate-800"
+                            >
+                              {(exportFormatMode === "accounting" ? ACCOUNTING_TEMPLATE_SHEETS : DEBIT_TEMPLATE_SHEETS).map((sheetName) => (
+                                <option key={sheetName} value={sheetName}>
+                                  {sheetName}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        )}
 
                         <div className="bg-white rounded-lg p-3.5 border border-indigo-100 space-y-2 text-[11px] shadow-[0_1px_3px_rgba(99,102,241,0.015)]">
                           <div className="flex justify-between items-center text-slate-650">

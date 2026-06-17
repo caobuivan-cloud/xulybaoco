@@ -16,23 +16,30 @@ XuLyBaoCo/
 |   |-- CONTEXT.md
 |   |-- KNOWLEDGE_BASE.md
 |   |-- PROJECT_STRUCTURE.md
+|-- public/
+|   |-- templates/
+|   |   |-- chi_tien_nh.xlsx           # Tệp mẫu hạch toán Báo Nợ (chi tiền ngân hàng)
+|   |   |-- thu_tien_nh.xlsx           # Tệp mẫu hạch toán Báo Có (thu tiền ngân hàng)
 |-- src/
 |   |-- components/
 |   |   |-- DashboardCharts.tsx        # Biểu đồ thống kê số tiền hạch toán, số dòng khớp/không khớp
 |   |   |-- GoogleSheetsSettings.tsx    # Giao diện cấu hình Web App URL kết nối Google Sheets
 |   |   |-- InstructionGuide.tsx        # Hướng dẫn sử dụng cho kế toán viên trên UI
 |   |   |-- RulesEditor.tsx             # Trình quản lý quy tắc từ khóa (Keyword Rules)
+|   |-- types/
+|   |   |-- xlsx-populate.d.ts         # Khai báo kiểu TypeScript cho thư viện xlsx-populate
 |   |-- utils/
 |   |   |-- excelProcessor.ts           # Xử lý và làm sạch dữ liệu, nhận diện từ khóa, sinh số phiếu
 |   |   |-- googleSheetsSync.ts         # Đồng bộ quy tắc và nhật ký hạch toán với Google Sheets
 |   |   |-- rulesStore.ts               # Tải/Lưu quy tắc từ khóa local (LocalStorage)
+|   |   |-- templateExcelExport.ts      # Xuất dữ liệu hạch toán theo tệp Excel mẫu bằng xlsx-populate
 |   |-- App.tsx                         # Component giao diện chính kiểm soát luồng nghiệp vụ
 |   |-- index.css                       # CSS toàn cục, tích hợp font chữ và Tailwind CSS v4
 |   |-- main.tsx                        # Entry point của ứng dụng React
 |   |-- types.ts                        # Định nghĩa kiểu dữ liệu dùng chung
 |-- .env.example                        # Mẫu cấu hình môi trường
 |-- index.html                          # Trang HTML chính của Single Page App
-|-- package.json                        # Khai báo dependencies, devDependencies và scripts
+|-- package.json                        # Khai báo dependencies (react, xlsx-populate, v.v.), devDependencies và scripts
 |-- tsconfig.json                       # Cấu hình compiler TypeScript
 |-- vite.config.ts                      # Cấu hình bundler Vite và alias `@`
 ```
@@ -53,6 +60,7 @@ XuLyBaoCo/
 | Module/Service | Path | Trách nhiệm | Phụ thuộc chính |
 |----------------|------|-------------|------------------|
 | Excel Parser & Mapping | `src/utils/excelProcessor.ts` | Làm sạch số tiền, tách ngày, so khớp từ khóa và sinh mã phiếu hạch toán nhóm theo ngày | Sử dụng thư viện `xlsx` và thuật toán sắp xếp độ dài keyword |
+| Template Excel Export Utility | `src/utils/templateExcelExport.ts` | Tải file mẫu tĩnh và ghi đè dữ liệu hạch toán báo nợ/có bảo toàn định dạng cũ | Thư viện `xlsx-populate` và `src/types.ts` |
 | Google Sheets Connector | `src/utils/googleSheetsSync.ts` | Gửi/nhận danh sách luật keyword và log hoạt động của kế toán viên qua Web App API | Google Apps Script (Web App URL) |
 | Local Rules Storage | `src/utils/rulesStore.ts` | Đọc/ghi và migrate danh sách từ khóa cục bộ | LocalStorage |
 
@@ -62,7 +70,7 @@ XuLyBaoCo/
 
 | File | Nhóm | Ý nghĩa | Lưu ý khi chỉnh sửa |
 |------|------|---------|---------------------|
-| `package.json` | Build/Deps | Định nghĩa thư viện (React 19, Tailwind CSS v4, Lucide, Recharts) và scripts chạy dự án | Cần chú ý độ tương thích khi nâng cấp thư viện |
+| `package.json` | Build/Deps | Định nghĩa thư viện (React 19, Tailwind CSS v4, Lucide, Recharts, xlsx-populate) và scripts chạy dự án | Cần chú ý độ tương thích khi nâng cấp thư viện |
 | `vite.config.ts` | Build Config | Cấu hình plugin React, Tailwind CSS v4, tắt HMR hoặc watch khi môi trường yêu cầu tiết kiệm tài nguyên | Lưu ý config HMR phụ thuộc biến `DISABLE_HMR` |
 | `src/index.css` | Styling | Nhập font chữ Google (Inter, JetBrains Mono, Space Grotesk) và khởi động Tailwind v4 | Cấu hình `@theme` nằm trực tiếp trong file này |
 

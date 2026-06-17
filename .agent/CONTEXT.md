@@ -9,7 +9,7 @@
 - **Trạng thái**: Development / Active (Đầy đủ tính năng phân tích file Excel báo có ngân hàng, gán mã khách hàng theo từ khóa và sinh số phiếu hạch toán theo ngày).
 
 ### Tech Stack
-- **Frontend**: React 19, Vite 6, TypeScript 5.8, Tailwind CSS v4, Recharts (Biểu đồ thống kê), `xlsx` (Đọc/xuất Excel), Lucide React (Icons), Motion (Hiệu ứng động).
+- **Frontend**: React 19, Vite 6, TypeScript 5.8, Tailwind CSS v4, Recharts (Biểu đồ thống kê), `xlsx` (Đọc Excel), `xlsx-populate` (Ghi và định dạng Excel theo mẫu phức tạp), Lucide React (Icons), Motion (Hiệu ứng động).
 - **Backend**: Serverless (Sử dụng Google Apps Script Web App URL làm API trung gian kết nối Google Sheets).
 - **Database**: LocalStorage (Lưu trữ cục bộ các quy tắc đối chiếu từ khóa và cấu hình cột), Google Sheets (Lưu trữ từ xa các quy tắc và nhật ký hoạt động).
 - **Auth**: Lấy thông tin tài khoản Portal VCCorp thông qua IndexedDB (`firebaseLocalStorageDb`).
@@ -34,7 +34,7 @@
 ### Changelog
 | File | Mô tả |
 |------|------|
-| [changelog/CHANGELOG-FE.md](./changelog/CHANGELOG-FE.md) | Thay đổi frontend, UI, UX, client-side flow (Chưa khởi tạo) |
+| [changelog/CHANGELOG-FE.md](./changelog/CHANGELOG-FE.md) | Thay đổi frontend, UI, UX, client-side flow |
 
 ### Agent Skills
 | Skill | Mô tả |
@@ -58,6 +58,7 @@
 | [src/App.tsx](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/App.tsx) | CRITICAL | Entry point hiển thị toàn bộ giao diện, điều phối luồng import, cấu hình, xử lý và sync dữ liệu. |
 | [src/utils/excelProcessor.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/excelProcessor.ts) | CRITICAL | Logic cốt lõi: Làm sạch số tiền, chuẩn hóa ngày tháng, khớp từ khóa (ưu tiên từ khóa dài nhất) và gom nhóm số phiếu theo ngày giao dịch. |
 | [src/utils/googleSheetsSync.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/googleSheetsSync.ts) | IMPORTANT | Đồng bộ hai chiều các quy tắc đối chiếu từ khóa và ghi logs kế toán viên lên Google Sheets thông qua Web App URL. |
+| [src/utils/templateExcelExport.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/templateExcelExport.ts) | IMPORTANT | Tiện ích xuất dữ liệu hạch toán báo nợ/có theo tệp Excel mẫu dùng xlsx-populate. |
 | [src/types.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/types.ts) | IMPORTANT | Định nghĩa kiểu dữ liệu thống nhất: cấu hình cột Excel, dòng xử lý, quy tắc từ khóa. |
 
 ---

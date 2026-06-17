@@ -22,3 +22,5 @@ Lưu trữ những **quyết định kiến trúc** quan trọng và **lý do ch
 ## Ongoing Decisions
 
 - 2026-06-15 **Lựa chọn Tailwind CSS v4 và React 19 để tối ưu hiệu năng render**. Why: Đáp ứng yêu cầu xử lý các bảng dữ liệu Excel lớn (lên tới hàng ngàn dòng) mượt mà mà không gây giật lag UI nhờ cơ chế render nhanh của React 19 và compile-time engine của Tailwind CSS v4.
+- 2026-06-17 **Sử dụng xlsx-populate để ghi dữ liệu vào các file Excel mẫu sẵn (templates)**. Why: Giữ nguyên cấu trúc định dạng phức tạp, các styles và formulas của file mẫu hạch toán kế toán mà thư viện `xlsx` bản Community không hỗ trợ ghi đè giữ style.
+- 2026-06-17 **Xử lý đa sheet (Multi-sheet) trong file Excel báo có**. Why: Giúp kế toán viên làm việc linh hoạt trên một workbook duy nhất có nhiều sheet dữ liệu của các ngân hàng hoặc tài khoản khác nhau mà không cần tách file thủ công.

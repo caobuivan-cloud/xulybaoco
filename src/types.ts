@@ -40,6 +40,7 @@ export interface FileData {
   sheetNames: string[];
   selectedSheet: string;
   rawRows: any[][];
+  rawSheets: Record<string, any[][]>;
   headers: string[];
   headerRowIndex: number;
 }
