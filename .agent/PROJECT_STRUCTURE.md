@@ -30,6 +30,7 @@ XuLyBaoCo/
 |   |   |-- xlsx-populate.d.ts         # Khai báo kiểu TypeScript cho thư viện xlsx-populate
 |   |-- utils/
 |   |   |-- excelProcessor.ts           # Xử lý và làm sạch dữ liệu, nhận diện từ khóa, sinh số phiếu
+|   |   |-- excelTemplatesBase64.ts     # Dữ liệu mã hóa Base64 nhúng của các tệp mẫu Excel
 |   |   |-- googleSheetsSync.ts         # Đồng bộ quy tắc và nhật ký hạch toán với Google Sheets
 |   |   |-- rulesStore.ts               # Tải/Lưu quy tắc từ khóa local (LocalStorage)
 |   |   |-- templateExcelExport.ts      # Xuất dữ liệu hạch toán theo tệp Excel mẫu bằng xlsx-populate

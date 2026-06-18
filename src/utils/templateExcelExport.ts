@@ -1,17 +1,18 @@
 /**
  * @file-level-contract src/utils/templateExcelExport.ts
  *
- * - **Trách nhiệm chính**: Tải tệp Excel mẫu (template) từ thư mục tĩnh, chèn dữ liệu hạch toán báo nợ/có đã xử lý vào đúng dòng dữ liệu quy định, bảo toàn style định dạng mẫu gốc và kích hoạt tải xuống cho người dùng.
+ * - **Trách nhiệm chính**: Sử dụng tệp Excel mẫu (template) đã nhúng dưới dạng Base64, chèn dữ liệu hạch toán báo nợ/có đã xử lý vào đúng dòng dữ liệu quy định, bảo toàn style định dạng mẫu gốc và kích hoạt tải xuống cho người dùng.
  * - **Không chịu trách nhiệm**: Phân tích cú pháp tệp Excel đầu vào, quản lý trạng thái UI hoặc cập nhật cấu hình quy tắc đối chiếu từ khóa (Rules).
  * - **Ràng buộc nghiệp vụ (Invariants & Guards)**:
  *   - Dòng dữ liệu bắt đầu ghi đè từ dòng thứ 2 (`TEMPLATE_DATA_START_ROW = 2`).
  *   - Số lượng cột xuất mặc định cố định ở 17 cột (`OUTPUT_COLUMN_COUNT = 17`).
  *   - Định dạng ngày xuất: Chuyển đổi chuỗi ngày nhận được thành 2 định dạng: ngày/tháng (ví dụ: `17/06` cho diễn giải) và m/d/yyyy (cho cột ngày chứng từ).
  *   - Phải dọn sạch (set value = `null`) các ô dữ liệu trống phía dưới danh sách dòng được ghi đè để đảm bảo không bị lẫn dữ liệu cũ của file mẫu gốc.
- * - **Dependencies chính**: `xlsx-populate/browser/xlsx-populate`, `src/types.ts`.
+ * - **Dependencies chính**: `xlsx-populate/browser/xlsx-populate`, `src/types.ts`, `src/utils/excelTemplatesBase64.ts`.
  */
 import XlsxPopulate from "xlsx-populate/browser/xlsx-populate";
 import { ProcessedRow } from "../types";
+import { THU_TIEN_NH_BASE64, CHI_TIEN_NH_BASE64 } from "./excelTemplatesBase64";
 
 export type TemplateExportMode = "accounting" | "debit";
 
@@ -146,14 +147,21 @@ function downloadBlob(blob: Blob, fileName: string) {
   URL.revokeObjectURL(url);
 }
 
-export async function exportRowsWithTemplate(options: TemplateExportOptions) {
-  const templatePath = TEMPLATE_PATHS[options.mode];
-  const response = await fetch(templatePath);
-  if (!response.ok) {
-    throw new Error(`Không tải được file mẫu: ${templatePath}`);
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binaryString = window.atob(base64);
+  const len = binaryString.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
   }
+  return bytes.buffer;
+}
 
-  const workbook = await XlsxPopulate.fromDataAsync(await response.arrayBuffer());
+export async function exportRowsWithTemplate(options: TemplateExportOptions) {
+  const base64Data = options.mode === "accounting" ? THU_TIEN_NH_BASE64 : CHI_TIEN_NH_BASE64;
+  const arrayBuffer = base64ToArrayBuffer(base64Data);
+  const workbook = await XlsxPopulate.fromDataAsync(arrayBuffer);
+
   const sheet = workbook.sheet(options.sheetName);
   if (!sheet) {
     throw new Error(`Không tìm thấy sheet "${options.sheetName}" trong file mẫu.`);
