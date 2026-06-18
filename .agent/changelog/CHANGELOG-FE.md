@@ -33,6 +33,13 @@
   - [src/utils/templateExcelExport.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/templateExcelExport.ts)
   - [src/utils/googleSheetsSync.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/googleSheetsSync.ts)
 
+### fix: định dạng ngày chứng từ thành Date Value và chuyển ô trống thành null
+- Thay đổi `getFormattedDateInfo` để trả về đối tượng `Date` thực sự thay vì chuỗi văn bản cho cột Ngày chứng từ.
+- Cấu hình thuộc tính `numberFormat` là `"dd/mm/yyyy"` trong `xlsx-populate` cho cột Ngày chứng từ để đảm bảo Excel nhận diện chính xác kiểu Date.
+- Cập nhật logic ghi dữ liệu ô trống từ chuỗi rỗng `""` thành `null` để tạo ô blank thực tế, tương thích tốt với phần mềm kế toán.
+- Files:
+  - [src/utils/templateExcelExport.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/templateExcelExport.ts)
+
 ---
 
 *Cập nhật tự động bởi update-docs*

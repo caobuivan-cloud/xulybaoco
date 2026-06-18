@@ -51,4 +51,5 @@
 
 ## 7. Ghi chú regression
 
-- Cần kiểm tra kỹ định dạng ngày tháng trên các phiên bản phần mềm Excel khác nhau để đảm bảo ngày chứng từ được chuyển sang dạng `m/d/yyyy` chuẩn.
+- Cần kiểm tra kỹ định dạng ngày tháng trên các phiên bản phần mềm Excel khác nhau để đảm bảo ngày chứng từ được chuyển sang dạng giá trị Date Value thực tế được định dạng hiển thị `dd/mm/yyyy`.
+- Đảm bảo các ô trống không chứa chuỗi rỗng `""` mà là ô trống (blank/null) thực sự trong file XML của Excel.

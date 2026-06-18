@@ -6,8 +6,9 @@
  * - **Ràng buộc nghiệp vụ (Invariants & Guards)**:
  *   - Dòng dữ liệu bắt đầu ghi đè từ dòng thứ 2 (`TEMPLATE_DATA_START_ROW = 2`).
  *   - Số lượng cột xuất mặc định cố định ở 17 cột (`OUTPUT_COLUMN_COUNT = 17`).
- *   - Định dạng ngày xuất: Chuyển đổi chuỗi ngày nhận được thành 2 định dạng: ngày/tháng (ví dụ: `17/06` cho diễn giải) và m/d/yyyy (cho cột ngày chứng từ).
+ *   - Định dạng ngày xuất: Chuyển đổi chuỗi ngày nhận được thành 2 định dạng: ngày/tháng (ví dụ: `17/06` cho diễn giải) và đối tượng Date được định dạng `dd/mm/yyyy` trong Excel (cho cột ngày chứng từ).
  *   - Phải dọn sạch (set value = `null`) các ô dữ liệu trống phía dưới danh sách dòng được ghi đè để đảm bảo không bị lẫn dữ liệu cũ của file mẫu gốc.
+ *   - Các ô trống (không có dữ liệu) phải được gán giá trị null (blank thực tế) thay vì chuỗi rỗng "" để tương thích tốt với phần mềm kế toán.
  * - **Dependencies chính**: `xlsx-populate/browser/xlsx-populate`, `src/types.ts`, `src/utils/excelTemplatesBase64.ts`.
  */
 import XlsxPopulate from "xlsx-populate/browser/xlsx-populate";
@@ -69,20 +70,32 @@ function getFormattedDateInfo(dateStr: string) {
   const parts = dateStr.split("-");
   if (parts.length === 3) {
     const [y, m, d] = parts;
+    const year = parseInt(y, 10);
+    const month = parseInt(m, 10);
+    const day = parseInt(d, 10);
+    const dateVal = !isNaN(year) && !isNaN(month) && !isNaN(day)
+      ? new Date(year, month - 1, day)
+      : null;
     return {
       dayMonth: `${d.padStart(2, "0")}/${m.padStart(2, "0")}`,
       mdy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
-      ddMMyyyy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
+      ddMMyyyy: dateVal || dateStr,
     };
   }
 
   const parts2 = dateStr.split("/");
   if (parts2.length === 3) {
     const [d, m, y] = parts2;
+    const year = parseInt(y, 10);
+    const month = parseInt(m, 10);
+    const day = parseInt(d, 10);
+    const dateVal = !isNaN(year) && !isNaN(month) && !isNaN(day)
+      ? new Date(year, month - 1, day)
+      : null;
     return {
       dayMonth: `${d.padStart(2, "0")}/${m.padStart(2, "0")}`,
       mdy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
-      ddMMyyyy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
+      ddMMyyyy: dateVal || dateStr,
     };
   }
 
@@ -194,7 +207,16 @@ export async function exportRowsWithTemplate(options: TemplateExportOptions) {
       const sourceCell = sheet.cell(styleSourceRow, colNumber);
       const targetCell = sheet.cell(targetRow, colNumber);
       targetCell.style(sourceCell.style(STYLE_NAMES));
-      targetCell.value(rowValues[colNumber - 1] ?? "");
+      
+      const val = rowValues[colNumber - 1];
+      if (val === "" || val === undefined || val === null) {
+        targetCell.value(null);
+      } else {
+        targetCell.value(val);
+        if (colNumber === 6 && val instanceof Date) {
+          targetCell.style("numberFormat", "dd/mm/yyyy");
+        }
+      }
     }
   });
 
