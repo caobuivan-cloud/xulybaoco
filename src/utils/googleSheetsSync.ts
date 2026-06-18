@@ -20,7 +20,7 @@ export interface SheetsConfig {
 
 export function loadSheetsConfig(): SheetsConfig {
   return {
-    webAppUrl: localStorage.getItem(STORAGE_KEYS.WEB_APP_URL) || "https://script.google.com/macros/s/AKfycbwxoHW4gM5bCPR_KeSys3iegI64PpuzRMHGstK6HjEKSz8UVjkUCdahe52pWN1_dFYd/exec",
+    webAppUrl: "https://script.google.com/macros/s/AKfycbwxoHW4gM5bCPR_KeSys3iegI64PpuzRMHGstK6HjEKSz8UVjkUCdahe52pWN1_dFYd/exec",
     userName: localStorage.getItem(STORAGE_KEYS.USER_NAME) || "Kế toán viên",
     syncEnabled: localStorage.getItem(STORAGE_KEYS.SYNC_ENABLED) !== "false",
     autoPull: localStorage.getItem(STORAGE_KEYS.AUTO_PULL) !== "false",
