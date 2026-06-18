@@ -70,8 +70,9 @@ function getFormattedDateInfo(dateStr: string) {
   if (parts.length === 3) {
     const [y, m, d] = parts;
     return {
-      dayMonth: `${d}/${m}`,
-      mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`,
+      dayMonth: `${d.padStart(2, "0")}/${m.padStart(2, "0")}`,
+      mdy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
+      ddMMyyyy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
     };
   }
 
@@ -80,13 +81,15 @@ function getFormattedDateInfo(dateStr: string) {
     const [d, m, y] = parts2;
     return {
       dayMonth: `${d.padStart(2, "0")}/${m.padStart(2, "0")}`,
-      mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`,
+      mdy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
+      ddMMyyyy: `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`,
     };
   }
 
   return {
     dayMonth: "N/A",
     mdy: dateStr,
+    ddMMyyyy: dateStr,
   };
 }
 
@@ -98,7 +101,7 @@ function buildAccountingRow(row: ProcessedRow, options: TemplateExportOptions) {
     options.exportMaKh,
     "",
     `nhập ngân hàng ngày ${dateInfo.dayMonth}`,
-    dateInfo.mdy,
+    dateInfo.ddMMyyyy,
     "",
     row.voucherNo,
     options.exportTkNo,
@@ -121,7 +124,7 @@ function buildDebitRow(row: ProcessedRow, options: TemplateExportOptions) {
     options.exportMaKh,
     "",
     `Thanh toán bk ${dateInfo.dayMonth}`,
-    dateInfo.mdy,
+    dateInfo.ddMMyyyy,
     "",
     row.voucherNo,
     options.exportTkCo,

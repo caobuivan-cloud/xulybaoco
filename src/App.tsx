@@ -1043,8 +1043,8 @@ export default function App() {
         const m = parts[1];
         const d = parts[2];
         return {
-          dayMonth: `${d}/${m}`,
-          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
+          dayMonth: `${d.padStart(2, '0')}/${m.padStart(2, '0')}`,
+          mdy: `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
         };
       }
       const parts2 = dateStr.split('/');
@@ -1054,7 +1054,7 @@ export default function App() {
         const y = parts2[2];
         return {
           dayMonth: `${d.padStart(2, '0')}/${m.padStart(2, '0')}`,
-          mdy: `${parseInt(m, 10)}/${parseInt(d, 10)}/${y}`
+          mdy: `${d.padStart(2, '0')}/${m.padStart(2, '0')}/${y}`
         };
       }
       return {
