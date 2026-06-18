@@ -57,6 +57,7 @@ export async function writeActionLogToSheet(
   try {
     await fetch(webAppUrl, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "log",
@@ -129,18 +130,15 @@ export async function pushRulesToGoogleSheet(rules: KeywordRule[], webAppUrl: st
   });
 
   try {
-    const response = await fetch(webAppUrl, {
+    await fetch(webAppUrl, {
       method: "POST",
+      mode: "no-cors",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "overwrite_rules",
         rules: values
       })
     });
-    
-    if (!response.ok) {
-      throw new Error(`Web App returned error: ${response.statusText}`);
-    }
   } catch(err) {
     console.error("Failed to push rules", err);
     throw err;
