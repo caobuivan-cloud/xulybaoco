@@ -290,36 +290,96 @@ export default function App() {
     let detectedDescCol = "C";
     let detectedAmountCol = "D";
 
-    for (let rIndex = 0; rIndex < Math.min(12, raw.length); rIndex++) {
+    // 1. Scan first 20 rows to find the row with the most matching keywords
+    let bestRowIndex = 0;
+    let maxScore = 0;
+
+    const strongKeywords = [
+      "ngày giao dịch",
+      "ngày chứng từ",
+      "ngày gd",
+      "số tham chiếu",
+      "số tiền ghi nợ",
+      "số tiền ghi có",
+      "diễn giải",
+      "mô tả"
+    ];
+
+    const normalKeywords = [
+      "ngày",
+      "date",
+      "số tiền",
+      "phát sinh",
+      "nội dung",
+      "amount",
+      "ghi nợ",
+      "ghi có",
+      "chi tiết"
+    ];
+
+    for (let rIndex = 0; rIndex < Math.min(20, raw.length); rIndex++) {
       const row = raw[rIndex];
       if (!row || !Array.isArray(row)) continue;
 
-      let hasDateKeyword = false;
-      let hasDescKeyword = false;
-      let hasAmountKeyword = false;
+      let score = 0;
+      row.forEach((cellVal) => {
+        const valStr = String(cellVal).toLowerCase().trim();
+        if (!valStr) return;
 
-      row.forEach((cellVal, colIdx) => {
-        const valStr = String(cellVal).toLowerCase();
-        const colLetter = indexToColumnLetter(colIdx);
+        // Check strong keywords (+2 score)
+        strongKeywords.forEach(kw => {
+          if (valStr.includes(kw)) score += 2;
+        });
 
-        if (valStr.includes("ngày") || valStr.includes("date") || valStr.includes("ngay gd")) {
-          detectedDateCol = colLetter;
-          hasDateKeyword = true;
-        }
-        if (valStr.includes("diễn giải") || valStr.includes("nội dung") || valStr.includes("mô tả") || valStr.includes("description") || valStr.includes("chi tiết")) {
-          detectedDescCol = colLetter;
-          hasDescKeyword = true;
-        }
-        if (valStr.includes("số tiền") || valStr.includes("phát sinh") || valStr.includes("sô tiên") || valStr.includes("amount") || valStr.includes("tiền")) {
-          detectedAmountCol = colLetter;
-          hasAmountKeyword = true;
-        }
+        // Check normal keywords (+1 score)
+        normalKeywords.forEach(kw => {
+          if (valStr.includes(kw)) score += 1;
+        });
       });
 
-      if (hasDateKeyword || hasDescKeyword || hasAmountKeyword) {
-        detectedHeaderRow = rIndex;
-        break;
+      if (score > maxScore) {
+        maxScore = score;
+        bestRowIndex = rIndex;
       }
+    }
+
+    detectedHeaderRow = bestRowIndex;
+
+    // 2. Scan the detected header row to map the columns
+    const headerRow = raw[detectedHeaderRow];
+    if (headerRow && Array.isArray(headerRow)) {
+      let foundDate = false;
+      let foundDesc = false;
+      let foundAmount = false;
+
+      headerRow.forEach((cellVal, colIdx) => {
+        const valStr = String(cellVal).toLowerCase().trim();
+        const colLetter = indexToColumnLetter(colIdx);
+
+        // Date detection
+        if (valStr.includes("ngày giao dịch") || valStr.includes("ngày chứng từ") || valStr.includes("ngày gd")) {
+          detectedDateCol = colLetter;
+          foundDate = true;
+        } else if (!foundDate && (valStr.includes("ngày") || valStr.includes("date"))) {
+          detectedDateCol = colLetter;
+        }
+
+        // Description detection
+        if (valStr.includes("diễn giải") || valStr.includes("mô tả")) {
+          detectedDescCol = colLetter;
+          foundDesc = true;
+        } else if (!foundDesc && (valStr.includes("nội dung") || valStr.includes("description") || valStr.includes("chi tiết"))) {
+          detectedDescCol = colLetter;
+        }
+
+        // Amount detection
+        if (valStr.includes("số tiền ghi có") || valStr.includes("ghi có") || valStr.includes("số tiền thu")) {
+          detectedAmountCol = colLetter;
+          foundAmount = true;
+        } else if (!foundAmount && (valStr.includes("số tiền") || valStr.includes("phát sinh") || valStr.includes("amount") || valStr.includes("tiền"))) {
+          detectedAmountCol = colLetter;
+        }
+      });
     }
 
     return {
@@ -347,46 +407,6 @@ export default function App() {
 
         // Use header: 1 to parse as 2D array, defval: "" to prevent missing indices
         const raw = rawSheets[sheetName] || XLSX.utils.sheet_to_json<any[][]>(worksheet, { header: 1, defval: "" });
-
-        // Auto-detect header row and columns:
-        // Scan first 10 rows for common bank headers
-        let detectedHeaderRow = 0;
-        let detectedDateCol = "A";
-        let detectedDescCol = "C";
-        let detectedAmountCol = "D";
-
-        for (let rIndex = 0; rIndex < Math.min(12, raw.length); rIndex++) {
-          const row = raw[rIndex];
-          if (!row || !Array.isArray(row)) continue;
-
-          let hasDateKeyword = false;
-          let hasDescKeyword = false;
-          let hasAmountKeyword = false;
-
-          row.forEach((cellVal, colIdx) => {
-            const valStr = String(cellVal).toLowerCase();
-            const colLetter = indexToColumnLetter(colIdx);
-
-            if (valStr.includes("ngày") || valStr.includes("date") || valStr.includes("ngay gd")) {
-              detectedDateCol = colLetter;
-              hasDateKeyword = true;
-            }
-            if (valStr.includes("diễn giải") || valStr.includes("nội dung") || valStr.includes("mô tả") || valStr.includes("description") || valStr.includes("chi tiết")) {
-              detectedDescCol = colLetter;
-              hasDescKeyword = true;
-            }
-            if (valStr.includes("số tiền") || valStr.includes("phát sinh") || valStr.includes("sô tiên") || valStr.includes("amount") || valStr.includes("tiền")) {
-              detectedAmountCol = colLetter;
-              hasAmountKeyword = true;
-            }
-          });
-
-          // If we found at least 2 key columns, let's treat this row as the header candidate
-          if (hasDateKeyword || hasDescKeyword || hasAmountKeyword) {
-            detectedHeaderRow = rIndex;
-            break;
-          }
-        }
 
         const initialSettings = detectSheetSettings(raw as unknown as any[][]);
 
@@ -966,7 +986,49 @@ export default function App() {
 
   // Apply settings updates
   const handleSettingsUpdate = (updates: Partial<ColumnSettings>) => {
-    const updated = { ...columnSettings, ...updates };
+    let updated = { ...columnSettings, ...updates };
+
+    // If the headerRow is manually changed, we should auto-detect the columns for the new header row!
+    if (updates.hasOwnProperty("headerRow") && fileData) {
+      const raw = fileData.rawRows;
+      const newHeaderRowIndex = updates.headerRow!;
+      const row = raw[newHeaderRowIndex];
+      if (row && Array.isArray(row)) {
+        let foundDate = false;
+        let foundDesc = false;
+        let foundAmount = false;
+
+        row.forEach((cellVal, colIdx) => {
+          const valStr = String(cellVal).toLowerCase().trim();
+          const colLetter = indexToColumnLetter(colIdx);
+
+          // Date detection
+          if (valStr.includes("ngày giao dịch") || valStr.includes("ngày chứng từ") || valStr.includes("ngày gd")) {
+            updated.dateCol = colLetter;
+            foundDate = true;
+          } else if (!foundDate && (valStr.includes("ngày") || valStr.includes("date"))) {
+            updated.dateCol = colLetter;
+          }
+
+          // Description detection
+          if (valStr.includes("diễn giải") || valStr.includes("mô tả")) {
+            updated.descCol = colLetter;
+            foundDesc = true;
+          } else if (!foundDesc && (valStr.includes("nội dung") || valStr.includes("description") || valStr.includes("chi tiết"))) {
+            updated.descCol = colLetter;
+          }
+
+          // Amount detection
+          if (valStr.includes("số tiền ghi có") || valStr.includes("ghi có") || valStr.includes("số tiền thu")) {
+            updated.amountCol = colLetter;
+            foundAmount = true;
+          } else if (!foundAmount && (valStr.includes("số tiền") || valStr.includes("phát sinh") || valStr.includes("amount") || valStr.includes("tiền"))) {
+            updated.amountCol = colLetter;
+          }
+        });
+      }
+    }
+
     setColumnSettings(updated);
 
     // If header row updated, rebuild headers representation

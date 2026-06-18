@@ -40,6 +40,14 @@
 - Files:
   - [src/utils/templateExcelExport.ts](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/utils/templateExcelExport.ts)
 
+### feat: tự động dò tìm dòng tiêu đề và ánh xạ cột khi upload hoặc đổi tiêu đề
+- Áp dụng thuật toán tính điểm dòng tiêu đề dựa trên từ khóa kế toán trong `detectSheetSettings` để tự động dò tìm dòng tiêu đề tối ưu nhất (Header Row) khi upload file.
+- Hỗ trợ tự động ánh xạ cột Ngày tháng, Diễn giải, Số tiền theo dòng tiêu đề được phát hiện.
+- Cập nhật `handleSettingsUpdate` để tự động quét lại dòng tiêu đề mới và cập nhật lại các cột tương ứng khi dòng tiêu đề thay đổi qua dropdown.
+- Dọn dẹp khối code tự dò tìm bị trùng lặp/thừa trong `processFile`.
+- Files:
+  - [src/App.tsx](file:///d:/Project_VCC/KeToanVCC/Ducuments/HachToanBaoCo/XuLyBaoCo/src/App.tsx)
+
 ---
 
 *Cập nhật tự động bởi update-docs*

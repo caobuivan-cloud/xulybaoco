@@ -27,6 +27,9 @@
 | HP-02 | Chuyển đổi sheet đang hoạt động sang "SheetB" qua dropdown | Dữ liệu bảng phía dưới lập tức thay đổi tương ứng với dữ liệu của "SheetB". Các cấu hình cột (cột ngày, cột số tiền, cột diễn giải) tự động nhận diện lại theo cấu trúc của "SheetB". |
 | HP-03 | Chọn định dạng xuất là "Báo có (accounting)" hoặc "Báo nợ (debit)" | Xuất hiện thêm phần cấu hình tham số hạch toán (Mã DVCS, mã GD, mã KH, TK Nợ, TK Có) và phần chọn sheet xuất trong file mẫu. |
 | HP-04 | Điền đầy đủ tham số hạch toán và nhấn nút Xuất Excel | Tệp Excel mới được tải xuống, có tên dạng `{Tên_File_Gốc}_{hach_toan_bao_co/no}_{timestamp}.xlsx`. Khi mở file ra, dữ liệu được ghi đúng vào sheet mẫu đã chọn từ dòng thứ 2, bảo toàn các styles (bold, border, font) từ dòng mẫu. |
+| HP-05 | Tải lên một tệp Excel sổ phụ ngân hàng bất kỳ | Dòng tiêu đề tự động nhận diện đúng dòng chứa tiêu đề bảng thông qua thuật toán tính điểm từ khóa. Các cột Ngày tháng, Diễn giải, Số tiền tự động nhận diện đúng cột. |
+| HP-06 | Thay đổi Dòng tiêu đề trên dropdown giao diện | Các dropdown chọn cột Ngày tháng, Diễn giải, Số tiền tự động thay đổi theo các từ khóa khớp trên dòng tiêu đề mới. |
+| HP-07 | Tự click chọn lại cột thủ công trên giao diện | Lựa chọn cột thủ công của người dùng được giữ nguyên và hệ thống không tự ý ghi đè lên trừ khi dòng tiêu đề thay đổi. |
 
 ## 4. Edge / Regression
 
